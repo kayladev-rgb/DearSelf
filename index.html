@@ -214,30 +214,65 @@ body.notebook-fullscreen{overflow:hidden}
 .ds-kayla-feature{padding:7px 10px;border:1px solid var(--border);border-radius:999px;background:var(--panel);font-size:12px}
 @media(max-width:650px){.ds-kayla-body{padding:0 18px 20px 18px}}
 
-</style>
-<style id="dearself-pwa-install-style">
-#dearself-pwa-install {
-  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
-  z-index: 99999; display: none; width: min(92vw, 430px);
-  padding: 16px 18px; border-radius: 18px;
-  background: rgba(255,255,255,.97); box-shadow: 0 12px 40px rgba(80,30,60,.18);
-  border: 1px solid rgba(232,119,159,.25); font-family: inherit;
-}
-#dearself-pwa-install .pwa-row { display:flex; gap:12px; align-items:center; }
-#dearself-pwa-install .pwa-icon { width:42px; height:42px; border-radius:12px; }
-#dearself-pwa-install .pwa-copy { flex:1; }
-#dearself-pwa-install .pwa-title { font-weight:800; font-size:15px; }
-#dearself-pwa-install .pwa-text { font-size:12px; opacity:.72; margin-top:3px; }
-#dearself-pwa-install button { border:0; border-radius:10px; padding:9px 13px; cursor:pointer; font-weight:700; }
-#dearself-pwa-install .pwa-install { background:#e8779f; color:white; }
-#dearself-pwa-install .pwa-close { background:transparent; color:inherit; }
-</style>
-
-</head>
+</style></head>
 <body>
 <div id="root"><div class="login"><div class="auth-card"><div class="auth-logo">📔</div><h1>Loading DearSelf…</h1><p>Please wait a moment.</p></div></div></div>
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
 <div id="toast" class="toast"></div><div id="dsHelpBot" class="ds-helpbot" aria-label="DearSelf Help Bot"><div class="ds-hb-head"><div class="ds-hb-avatar">✦</div><div style="min-width:0"><h3>DearSelf Help Bot</h3><div class="small muted">Your in-app helper · can do things for you</div></div><button class="ds-hb-conv-toggle" id="dsHelpConvToggle" type="button" title="Conversations" aria-label="Open conversations">☰</button><span class="ds-hb-badge">BETA</span><button class="ds-hb-close" onclick="toggleHelpBot(false)">×</button></div><div class="ds-hb-layout"><aside id="dsHelpHistory" class="ds-hb-history"><div class="ds-hb-history-top"><button class="ds-hb-new" id="dsHelpNewConversation" type="button">＋ New conversation</button><div id="dsHelpHistoryCount" class="ds-hb-history-count"></div></div><div id="dsHelpConvs" class="ds-hb-convs"></div></aside><div class="ds-hb-chatcol"><div id="dsHelpMsgs" class="ds-hb-msgs"></div><div class="ds-hb-input"><textarea id="dsHelpInput" placeholder="Tell me what you want to do…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHelpBot()}"></textarea><button class="ds-hb-send" onclick="sendHelpBot()">Send</button></div></div></div></div><button id="dsHelpFab" class="ds-helpbot-fab" onclick="toggleHelpBot()" title="DearSelf Help Bot">✦</button>
+<script>
+/* DearSelf GitHub Pages updater */
+const DEARSELF_VERSION_NUMBER = 38;
+
+async function checkForUpdates(silent=false){
+  try{
+    const res = await fetch('./version.json?t=' + Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('Version file unavailable');
+    const remote = await res.json();
+    const remoteNum = Number(remote.versionNumber || 0);
+    const remoteLabel = remote.version || ('V' + remoteNum);
+
+    if(remoteNum > DEARSELF_VERSION_NUMBER){
+      const notes = Array.isArray(remote.notes) ? remote.notes : [];
+      const noteHtml = notes.length
+        ? '<ul style="text-align:left;margin:10px 0 0 20px">' +
+          notes.map(n=>'<li>'+esc(String(n))+'</li>').join('') + '</ul>'
+        : '<p class="muted">A newer version is available.</p>';
+
+      modal(`<button class="modal-close" onclick="closeModal()">×</button>
+        <h2>✨ DearSelf ${esc(remoteLabel)} is available!</h2>
+        <p class="muted">You are currently using V38.</p>
+        ${noteHtml}
+        <div class="actions" style="margin-top:16px">
+          <button class="btn primary" onclick="updateDearSelf()">Update DearSelf</button>
+          <button class="btn" onclick="closeModal()">Later</button>
+        </div>`);
+      return true;
+    }
+
+    if(!silent) toast('DearSelf is up to date ♡');
+    return false;
+  }catch(err){
+    if(!silent) toast('Could not check for updates right now.');
+    console.warn('DearSelf update check failed:', err);
+    return false;
+  }
+}
+
+async function updateDearSelf(){
+  closeModal();
+  try{
+    if('serviceWorker' in navigator){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.update().catch(()=>{})));
+    }
+  } finally {
+    location.reload();
+  }
+}
+
+setTimeout(() => checkForUpdates(true), 2500);
+</script>
+
 <script>
 const DEARSELF_VERSION = "V38";
 const KEY="personal_home_page_v11";
@@ -407,7 +442,7 @@ function home(){
  entertainment:`<div class="panel ds-widget-card" data-widget="entertainment"><div class="row between"><h2>Entertainment</h2><button class="btn" onclick="show('Entertainment')">Open</button></div><div class="ds-list">${(state.entItems||[]).filter(x=>['Currently Watching','Currently Reading'].includes(x.status)).slice(0,5).map(x=>`<div class="ds-line"><span>♫</span><div><b>${esc(x.title)}</b><div class="small muted">${esc(x.status||'')}</div></div></div>`).join('')||'<div class="empty">Nothing currently in progress.</div>'}</div></div>`,
  goals:`<div class="panel ds-widget-card" data-widget="goals"><div class="row between"><h2>Goals & Habits</h2><button class="btn" onclick="show('Goals & Habits')">Open</button></div><div class="ds-list">${(state.goals||[]).slice(0,5).map(g=>`<div class="ds-line"><span>◎</span><div><b>${esc(g.title||g.name||'Goal')}</b><div class="small muted">${Number(g.progress||0)}%</div></div></div>`).join('')||'<div class="empty">No goals yet. Start something for yourself. ♡</div>'}</div></div>`
  };
- document.getElementById('content').innerHTML=`<div class="ds-v34-home-tools"><button class="btn primary" onclick="quickAdd()">＋ Quick Add</button><a class="btn ds-v34-update" href="https://drive.google.com/drive/folders/1cLFo9--9Ie4o5W-26ICjmhFY6HHDsMFR?usp=sharing" target="_blank" rel="noopener noreferrer">↻ Check for Updates</a></div><div class="hero ds-welcome"><div><div class="small muted">YOUR SPACE</div><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}, ${esc(state.username)} ♡</h1><p>${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · Everything in one place.</p></div><div class="ds-welcome-actions"><button class="btn primary" onclick="quickAdd()">＋ Quick add</button><button class="btn" onclick="setupHomeWidgets()">⚙ Customize Home</button></div></div><div class="grid stats">${card('Open tasks',(state.tasks||[]).filter(x=>!x.done).length,'to do')}${card('Today',(state.events||[]).filter(x=>x.date===today()).length,'calendar events')}${card('Goals',(state.goals||[]).length,'being tracked')}${card('Entertainment',(state.entItems||[]).length,'items')}</div><div class="ds-home-grid" id="dsHomeGrid">${widgets.filter(k=>enabled[k]!==false && cards[k]).map(k=>cards[k]).join('')}</div><div class="ds-quote panel"><div class="ds-quote-mark">♡</div><div><h2>DearSelf</h2><p>${dsMotivation()}</p><div class="small muted">You can rearrange your Home page anytime.</div></div></div>`;
+ document.getElementById('content').innerHTML=`<div class="ds-v34-home-tools"><button class="btn primary" onclick="quickAdd()">＋ Quick Add</button><button class="btn ds-v34-update" onclick="checkForUpdates()">↻ Check for Updates</button></div><div class="hero ds-welcome"><div><div class="small muted">YOUR SPACE</div><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}, ${esc(state.username)} ♡</h1><p>${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · Everything in one place.</p></div><div class="ds-welcome-actions"><button class="btn primary" onclick="quickAdd()">＋ Quick add</button><button class="btn" onclick="setupHomeWidgets()">⚙ Customize Home</button></div></div><div class="grid stats">${card('Open tasks',(state.tasks||[]).filter(x=>!x.done).length,'to do')}${card('Today',(state.events||[]).filter(x=>x.date===today()).length,'calendar events')}${card('Goals',(state.goals||[]).length,'being tracked')}${card('Entertainment',(state.entItems||[]).length,'items')}</div><div class="ds-home-grid" id="dsHomeGrid">${widgets.filter(k=>enabled[k]!==false && cards[k]).map(k=>cards[k]).join('')}</div><div class="ds-quote panel"><div class="ds-quote-mark">♡</div><div><h2>DearSelf</h2><p>${dsMotivation()}</p><div class="small muted">You can rearrange your Home page anytime.</div></div></div>`;
  initHomeDrag();
 }
 function dsMotivation(){const open=(state.tasks||[]).filter(x=>!x.done).length; if(!open)return "You're all caught up. Look at you getting things done ✨"; if(open>=6)return "Okay, we have some catching up to do. One thing at a time. ♡"; return "You don't have to do everything at once. Let's take it one thing at a time. ♡";}
@@ -1632,7 +1667,7 @@ window.addEventListener("DOMContentLoaded",()=>{ try{ auth(); }catch(e){ console
     document.getElementById('content').innerHTML=`
       <div class="ds-welcome hero">
         <div><div class="small muted">${now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div><h1>Good ${greet}, ${_esc(state.username||'you')} ♡</h1><p>${_esc(dsMessage())}</p></div>
-        <div class="ds-welcome-actions"><button class="btn primary" onclick="quickAdd()">＋ Quick add</button><a class="btn ds-v34-update" href="https://drive.google.com/drive/folders/1cLFo9--9Ie4o5W-26ICjmhFY6HHDsMFR?usp=sharing" target="_blank" rel="noopener noreferrer">↻ Check for Updates</a><button class="btn" onclick="setupHomeWidgets()">Customize Home</button></div>
+        <div class="ds-welcome-actions"><button class="btn primary" onclick="quickAdd()">＋ Quick add</button><button class="btn ds-v34-update" onclick="checkForUpdates()">↻ Check for Updates</button><button class="btn" onclick="setupHomeWidgets()">Customize Home</button></div>
       </div>
       <div class="ds-stats grid stats">
         ${card('Course progress',dsCourseProgress()+'%','average across courses')}
@@ -1936,98 +1971,5 @@ window.addEventListener('load',function(){
   },50);
 });
 </script>
-
-<div id="dearself-pwa-install" role="dialog" aria-label="Install DearSelf">
-  <div class="pwa-row">
-    <img class="pwa-icon" src="./icons/icon-192.png" alt="">
-    <div class="pwa-copy">
-      <div class="pwa-title">Install DearSelf?</div>
-      <div class="pwa-text">Add DearSelf to your device for an app-like experience.</div>
-    </div>
-    <button class="pwa-install" id="dearself-pwa-install-btn">Install</button>
-    <button class="pwa-close" id="dearself-pwa-close" aria-label="Close">×</button>
-  </div>
-</div>
-
-
-<script id="dearself-pwa-install-script">
-(() => {
-  let deferredPrompt = null;
-  const box = document.getElementById('dearself-pwa-install');
-  const installBtn = document.getElementById('dearself-pwa-install-btn');
-  const closeBtn = document.getElementById('dearself-pwa-close');
-  const DISMISSED_KEY = 'dearself-install-dismissed-v38';
-
-  const isStandalone = () =>
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true ||
-    document.referrer.startsWith('android-app://');
-
-  function showInstall() {
-    if (!box || isStandalone()) return;
-    box.style.display = 'block';
-  }
-
-  function hideInstall() {
-    if (box) box.style.display = 'none';
-  }
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    showInstall();
-  });
-
-  installBtn?.addEventListener('click', async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      try { await deferredPrompt.userChoice; } catch (_) {}
-      deferredPrompt = null;
-      hideInstall();
-      return;
-    }
-
-    // Chrome may already expose the native install button without firing
-    // beforeinstallprompt at the moment our page loads.
-    installBtn.textContent = 'Use Chrome’s Install button';
-    installBtn.disabled = true;
-    setTimeout(() => {
-      installBtn.textContent = 'Install DearSelf';
-      installBtn.disabled = false;
-    }, 3500);
-  });
-
-  closeBtn?.addEventListener('click', () => {
-    hideInstall();
-    try { localStorage.setItem(DISMISSED_KEY, '1'); } catch (_) {}
-  });
-
-  window.addEventListener('appinstalled', () => {
-    hideInstall();
-    try { localStorage.removeItem(DISMISSED_KEY); } catch (_) {}
-  });
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(err =>
-        console.warn('DearSelf service worker registration failed:', err)
-      );
-    });
-  }
-
-  // If Chrome recognizes the PWA but does not dispatch beforeinstallprompt
-  // yet, still give the user a visible in-page explanation.
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      if (!isStandalone()) {
-        let dismissed = false;
-        try { dismissed = localStorage.getItem(DISMISSED_KEY) === '1'; } catch (_) {}
-        if (!dismissed) showInstall();
-      }
-    }, 1200);
-  });
-})();
-</script>
-
 </body>
 </html>

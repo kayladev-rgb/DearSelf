@@ -1,7 +1,7 @@
 {
   "name": "DearSelf",
   "short_name": "DearSelf",
-  "description": "DearSelf \u2014 a cozy personal dashboard for your days, thoughts and everything in between.",
+  "description": "DearSelf \u2014 your personal space for school, plans, thoughts and everything in between.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

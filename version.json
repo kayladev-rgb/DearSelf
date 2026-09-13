@@ -1,0 +1,11 @@
+{
+  "version": "V38",
+  "versionNumber": 38,
+  "notes": [
+    "Finance \u2014 edit Saving Goals",
+    "Help Bot \u2014 add courses with course names or course codes",
+    "Courses \u2014 reposition cover images",
+    "Timetable \u2014 previous/next week navigation",
+    "PWA installation and offline support"
+  ]
+}
