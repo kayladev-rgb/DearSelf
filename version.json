@@ -1,11 +1,12 @@
 {
-  "version": "V38",
-  "versionNumber": 38,
+  "version": "V39 Beta",
+  "versionNumber": 39,
   "notes": [
-    "Finance \u2014 edit Saving Goals",
-    "Help Bot \u2014 add courses with course names or course codes",
-    "Courses \u2014 reposition cover images",
-    "Timetable \u2014 previous/next week navigation",
-    "PWA installation and offline support"
+    "30 app-wide font choices",
+    "Study session, timetable, assignment, and to-do/task notifications",
+    "Notification controls and timing in Settings",
+    "Toast messages moved above the Help Bot",
+    "Web/GitHub Pages update checker retained and upgraded to V39 Beta",
+    "\u2713 Automatic update alerts when a newer DearSelf version is detected"
   ]
 }
