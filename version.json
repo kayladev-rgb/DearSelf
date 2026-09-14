@@ -2,7 +2,8 @@
   "version": "V43.3 Beta",
   "versionNumber": 43.3,
   "notes": [
-    "V43.3 Beta release.",
+    "DearSelf V43.3 Beta.",
+    "Fixed the update checker version mismatch.",
     "Includes the V43.2 Beta fixes and features.",
     "Home Banner editing and removal remain available.",
     "Preserves the existing theme system and user data."
