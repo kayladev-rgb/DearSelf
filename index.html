@@ -298,13 +298,13 @@ body{font-family:var(--dearself-selected-font)!important}
 .ds-font-option{font-family:var(--preview-font)!important}
 .ds-font-option *{font-family:inherit!important}
 </style>
-<style id="dearself-v39-font-modal-click-layer">#modalWrap{z-index:2147482000}#dearselfFontList{pointer-events:auto!important}</style></head>
+<style id="dearself-v39-font-modal-click-layer">#modalWrap{z-index:2147482000}#dearselfFontList{pointer-events:auto!important}</style><style>.ds-quick-row{display:grid;grid-template-columns:1fr 2fr auto;gap:8px;align-items:center}.ds-quick-row input{min-width:0}@media(max-width:700px){.ds-quick-row{grid-template-columns:1fr}.ds-quick-row .ql-remove{width:100%}}</style></head>
 <body>
 <div id="root"><div class="login"><div class="auth-card"><div class="auth-logo">📔</div><h1>Loading DearSelf…</h1><p>Please wait a moment.</p></div></div></div>
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
 <div id="toast" class="toast"></div><div id="dsHelpBot" class="ds-helpbot" aria-label="DearSelf Help Bot"><div class="ds-hb-head"><div class="ds-hb-avatar">✦</div><div style="min-width:0"><h3>DearSelf Help Bot</h3><div class="small muted">Your in-app helper · can do things for you</div></div><button class="ds-hb-conv-toggle" id="dsHelpConvToggle" type="button" title="Conversations" aria-label="Open conversations">☰</button><span class="ds-hb-badge">BETA</span><button class="ds-hb-close" onclick="toggleHelpBot(false)">×</button></div><div class="ds-hb-layout"><aside id="dsHelpHistory" class="ds-hb-history"><div class="ds-hb-history-top"><button class="ds-hb-new" id="dsHelpNewConversation" type="button">＋ New conversation</button><div id="dsHelpHistoryCount" class="ds-hb-history-count"></div></div><div id="dsHelpConvs" class="ds-hb-convs"></div></aside><div class="ds-hb-chatcol"><div id="dsHelpMsgs" class="ds-hb-msgs"></div><div class="ds-hb-input"><textarea id="dsHelpInput" placeholder="Tell me what you want to do…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHelpBot()}"></textarea><button class="ds-hb-send" onclick="sendHelpBot()">Send</button></div></div></div></div><button id="dsHelpFab" class="ds-helpbot-fab" onclick="toggleHelpBot()" title="DearSelf Help Bot">✦</button>
 <script>
-const DEARSELF_VERSION = "V42.5 Beta";
+const DEARSELF_VERSION = "V42.6 Beta";
 const KEY="personal_home_page_v11";
 const DEFAULT={
  homeName:"My DearSelf",username:"",profilePhoto:"",passwordHash:"",passwordPrompt:true,passwordMode:"lock",locked:false,tutorialSeen:false,accessCode:"",isOwner:false,
@@ -314,7 +314,7 @@ const DEFAULT={
  courses:[],assignments:[],exams:[],grades:[],study:[],studySessions:[],schoolTodos:[],courseNotes:[],
  journalEntries:[],journalStickers:[],
  timetable:[],activity:[],monthlyBudget:0,
- externalAccounts:[], notifications:[], notificationSettings:{study:true,timetable:true,assignments:true,todo:true,leadMinutes:15}, focusSessions:[], habits:[], analyticsPrefs:{}, homeWidgets:{}, privacySettings:{autoLock:false}, universalFiles:[]
+ externalAccounts:[], notifications:[], notificationSettings:{study:true,timetable:true,assignments:true,todo:true,leadMinutes:15}, focusSessions:[], habits:[], analyticsPrefs:{}, homeWidgets:{}, privacySettings:{autoLock:false}, universalFiles:[],homeBannerImage:"",homeBannerText:"A calm mind creates a beautiful life. ♡",homeGalleryImage:"",homeQuickLinks:[]
 };
 let state=load(), currentPage="Home", calCursor=new Date(); calCursor.setDate(1); let calView="month";
 let stickerCursor=new Date(), stickerView='week';
@@ -500,10 +500,11 @@ function show(p){clearTimeout(window.__studyTimer);window.__studyTimer=null;curr
 function pageHead(title,sub=""){return `<h1 class="page-title">${title}</h1>${sub?`<p class="subtitle">${sub}</p>`:""}`}
 function card(title,value,desc){return `<div class="stat"><div class="k">${title}</div><div class="v">${value}</div><div class="d">${desc}</div></div>`}
 function home(){
-  const defaults=['today','tasks','school','finance','entertainment','goals','notes','focus','quote','gallery'];
+  const defaults=['today','tasks','school','finance','entertainment','goals','notes','focus','quote','gallery','banner','quicklinks'];
   const order=Array.isArray(state.homeWidgetOrder)?state.homeWidgetOrder:defaults.slice();
   const enabled=state.homeWidgets||{};
   const cards={
+    banner:`<div class="panel ds-widget-card ds-home-banner" data-widget="banner" style="overflow:hidden;min-height:180px;display:flex;align-items:flex-end;position:relative;background:${state.homeBannerImage?`url("${esc(state.homeBannerImage)}") center/cover`:'linear-gradient(135deg,var(--accentSoft),var(--panel))'}"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 15%,rgba(0,0,0,.55))"></div><div style="position:relative;color:white;padding:24px;width:100%"><div class="small" style="opacity:.9">YOUR SPACE</div><h2 style="font-size:28px;margin:5px 0">${esc(state.homeBannerText||'A calm mind creates a beautiful life. ♡')}</h2><button class="btn" style="background:rgba(255,255,255,.9)" onclick="openHomeBannerSettings()">Customize banner</button></div></div>`,
     today:`<div class="panel ds-widget-card" data-widget="today"><div class="row between"><h2>Today's Schedule</h2><button class="btn" onclick="show('Calendar')">View calendar</button></div><div class="ds-class-list">${(state.events||[]).filter(x=>x.date===today()).slice(0,6).map(x=>`<div class="ds-class"><span class="ds-dot" style="background:${esc(x.color||'var(--accent)')}"></span><div><b>${esc(x.time||'All day')}</b><div>${esc(x.title||'Event')}</div><span>${esc(x.location||'')}</span></div></div>`).join('')||'<div class="empty">Nothing scheduled today. ♡</div>'}</div></div>`,
     tasks:`<div class="panel ds-widget-card" data-widget="tasks"><div class="row between"><h2>Tasks</h2><button class="btn" onclick="show('Tasks')">View all</button></div><div class="ds-list">${(state.tasks||[]).filter(x=>!x.done).slice(0,6).map(x=>`<div class="ds-line"><span>○</span><div style="flex:1"><b>${esc(x.title)}</b><div class="small muted">${x.due?'Due '+esc(x.due):'No deadline'}</div></div></div>`).join('')||'<div class="empty">You are all caught up. ✨</div>'}</div></div>`,
     school:`<div class="panel ds-widget-card" data-widget="school"><div class="row between"><h2>School</h2><button class="btn" onclick="show('School')">Open school</button></div><div class="ds-grid-3">${(state.courses||[]).slice(0,3).map(c=>`<div class="ds-notice"><b>${esc(c.name||'Course')}</b><div class="ds-progress" style="margin-top:8px"><i style="width:${courseProgress(c)}%"></i></div><div class="small muted">${courseProgress(c)}% complete</div></div>`).join('')||'<div class="empty">Add a course to get started.</div>'}</div></div>`,
@@ -513,12 +514,13 @@ function home(){
     notes:`<div class="panel ds-widget-card" data-widget="notes"><div class="row between"><h2>Notes</h2><button class="btn" onclick="show('Notes')">Open notes</button></div><div class="ds-list">${(state.notes||[]).slice(0,4).map(n=>`<div class="ds-line"><span>✎</span><div><b>${esc(n.title||'Untitled note')}</b><div class="small muted">${esc(String(n.body||n.text||'').slice(0,90))}</div></div></div>`).join('')||'<div class="empty">No notes yet.</div>'}</div></div>`,
     focus:`<div class="panel ds-widget-card" data-widget="focus"><div class="row between"><h2>Focus</h2><button class="btn" onclick="show('Focus')">Open</button></div><div class="ds-notice"><b>Need a little focus?</b><div class="small muted" style="margin-top:4px">Start a focus session and give yourself some uninterrupted time.</div><button class="btn primary" style="margin-top:10px" onclick="show('Focus')">Start focus mode</button></div></div>`,
     quote:`<div class="panel ds-widget-card" data-widget="quote"><div class="row between"><h2>Quote of the Day</h2><span style="font-size:24px">❝</span></div><p style="font-size:18px;line-height:1.5;margin:8px 0">${dsMotivation()}</p><div class="small muted">A little reminder from DearSelf ♡</div></div>`,
-    gallery:`<div class="panel ds-widget-card" data-widget="gallery"><div class="row between"><h2>Gallery</h2><button class="btn" onclick="show('Personal')">Open</button></div>${state.profilePhoto?`<img src="${esc(state.profilePhoto)}" alt="Your profile" style="width:100%;max-height:180px;object-fit:cover;border-radius:14px">`:'<div class="empty">Add a profile photo in Settings to personalize this space.</div>'}</div>`
+    gallery:`<div class="panel ds-widget-card" data-widget="gallery"><div class="row between"><h2>Gallery</h2><button class="btn" onclick="openHomeGallerySettings()">Change picture</button></div>${state.homeGalleryImage?`<img src="${esc(state.homeGalleryImage)}" alt="Home picture" style="width:100%;height:230px;object-fit:cover;border-radius:14px">`:'<div class="empty">No picture yet. Choose one in Settings.</div>'}</div>`,
+    quicklinks:`<div class="panel ds-widget-card" data-widget="quicklinks"><div class="row between"><h2>Quick Links</h2><button class="btn" onclick="showQuickLinksSettings()">Manage</button></div>${(state.homeQuickLinks||[]).filter(x=>x&&x.label&&x.url).length?`<div class="ds-grid-3">${state.homeQuickLinks.filter(x=>x&&x.label&&x.url).slice(0,6).map(x=>`<a class="ds-notice" href="${esc(x.url)}" target="_blank" rel="noopener" style="text-decoration:none"><b>${esc(x.label)}</b><div class="small muted" style="margin-top:5px">${esc(x.url)}</div></a>`).join('')}</div>`:'<div class="empty"><p>Your Quick Links are empty.</p><p class="small muted">Set them up in Settings and they will appear here.</p><button class="btn primary" onclick="showQuickLinksSettings()">Go to Settings →</button></div>'}</div>`
   };
   const visible=order.filter(k=>cards[k]&&enabled[k]!==false);
   const missing=defaults.filter(k=>!order.includes(k));
   state.homeWidgetOrder=[...order.filter(k=>cards[k]),...missing];
-  document.getElementById('content').innerHTML=`<div class="ds-v34-home-tools"><button class="btn primary" onclick="quickAdd()">＋ Quick Add</button><button class="btn ds-v34-update" onclick="checkForUpdates()">↻ Check for Updates</button><button class="btn" onclick="showDiscordComingSoon()">Discord</button></div><div class="hero ds-welcome"><div><div class="small muted">YOUR SPACE</div><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}, ${esc(state.username)} ♡</h1><p>${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · Everything in one place.</p></div><div class="ds-welcome-actions"><button class="btn primary" onclick="quickAdd()">＋ Quick add</button><button class="btn" onclick="setupHomeWidgets()">⚙ Customize Home</button></div></div><div class="grid stats">${card('Open tasks',(state.tasks||[]).filter(x=>!x.done).length,'to do')}${card('Today',(state.events||[]).filter(x=>x.date===today()).length,'calendar events')}${card('Goals',(state.goals||[]).length,'being tracked')}${card('Entertainment',(state.entItems||[]).length,'items')}</div><div class="ds-home-grid" id="dsHomeGrid">${visible.map(k=>cards[k]).join('')}</div><div class="ds-quote panel"><div class="ds-quote-mark">♡</div><div><h2>DearSelf</h2><p>${dsMotivation()}</p><div class="small muted">You can rearrange your Home page anytime.</div></div></div>`;
+  document.getElementById('content').innerHTML=`<div class="ds-v34-home-tools"><button class="btn primary" onclick="quickAdd()">＋ Quick Add</button><button class="btn ds-v34-update" onclick="checkForUpdates()">↻ Check for Updates</button><button class="btn" onclick="showDiscordComingSoon()">Discord</button><button class="btn" onclick="setupHomeWidgets()">Customize Home</button></div><div class="hero ds-welcome"><div><div class="small muted">YOUR SPACE</div><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}, ${esc(state.username)} ♡</h1><p>${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · Everything in one place.</p></div></div><div class="grid stats">${card('Open tasks',(state.tasks||[]).filter(x=>!x.done).length,'to do')}${card('Today',(state.events||[]).filter(x=>x.date===today()).length,'calendar events')}${card('Goals',(state.goals||[]).length,'being tracked')}${card('Entertainment',(state.entItems||[]).length,'items')}</div><div class="ds-home-grid" id="dsHomeGrid">${visible.map(k=>cards[k]).join('')}</div>`;
   initHomeDrag();
   save();
 }
@@ -1595,6 +1597,37 @@ function openDearSelfFonts(){
     };
   }
 }
+function pickHomeImage(kind){
+  const i=document.createElement('input'); i.type='file'; i.accept='image/*';
+  i.onchange=()=>{
+    const f=i.files?.[0]; if(!f)return;
+    if(f.size>5*1024*1024){alert('Please choose an image under 5 MB.');return;}
+    const r=new FileReader();
+    r.onload=()=>{ if(kind==='banner')state.homeBannerImage=r.result; else state.homeGalleryImage=r.result; save(); closeModal(); show('Home'); toast('Home picture updated ♡'); };
+    r.readAsDataURL(f);
+  }; i.click();
+}
+function openHomeBannerSettings(){
+  modal(`<button class="modal-close" onclick="closeModal()">×</button><h2>Customize Banner</h2><p class="muted">Choose a picture and a message for your Home banner.</p><div class="field"><label>Banner message</label><input id="homeBannerTextInput" value="${esc(state.homeBannerText||'A calm mind creates a beautiful life. ♡')}"></div><div class="actions"><button class="btn primary" onclick="saveHomeBannerText()">Save message</button><button class="btn" onclick="pickHomeImage('banner')">📷 Change picture</button>${state.homeBannerImage?'<button class="btn danger" onclick="state.homeBannerImage=\"\";save();closeModal();show(\"Home\")">Remove picture</button>':''}</div>`);
+}
+function saveHomeBannerText(){state.homeBannerText=document.getElementById('homeBannerTextInput')?.value.trim()||'A calm mind creates a beautiful life. ♡';save();closeModal();show('Home');toast('Banner updated ♡')}
+function openHomeGallerySettings(){pickHomeImage('gallery')}
+function showQuickLinksSettings(){
+  show('Settings');
+  setTimeout(()=>document.getElementById('dsQuickLinksPanel')?.scrollIntoView({behavior:'smooth',block:'center'}),100);
+}
+function addQuickLinkRow(label='',url=''){
+  const wrap=document.getElementById('dsQuickLinksRows'); if(!wrap)return;
+  const row=document.createElement('div'); row.className='ds-quick-row';
+  row.innerHTML=`<input class="ql-label" placeholder="Name (e.g. VLE)" value="${esc(label)}"><input class="ql-url" placeholder="https://example.com" value="${esc(url)}"><button class="btn danger ql-remove" type="button">×</button>`;
+  row.querySelector('.ql-remove').onclick=()=>{row.remove();saveQuickLinksSettings()};
+  wrap.appendChild(row);
+}
+function saveQuickLinksSettings(){
+  const rows=[...document.querySelectorAll('#dsQuickLinksRows .ds-quick-row')];
+  state.homeQuickLinks=rows.map(r=>({label:r.querySelector('.ql-label')?.value.trim(),url:r.querySelector('.ql-url')?.value.trim()})).filter(x=>x.label&&x.url);
+  save(); toast('Quick Links saved ♡');
+}
 function settingsPage(){
   const bytes=new Blob([JSON.stringify(state)]).size;
   document.getElementById("content").innerHTML=pageHead("Settings","A full control center.")+`
@@ -1625,6 +1658,22 @@ function settingsPage(){
           <button class="btn" onclick="importData()">📥 Install / Load Data Backup</button>
         </div>
       </div>
+    </div>
+    <div class="panel" style="margin-top:15px">
+      <div class="row between"><div><h2>🖼️ Home Pictures & Banner</h2><p class="small muted">Make the picture areas on your Home page completely yours.</p></div><button class="btn" onclick="show('Home')">View Home</button></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn" onclick="openHomeBannerSettings()">🖼️ Customize banner</button>
+        <button class="btn" onclick="openHomeGallerySettings()">📷 Change Gallery picture</button>
+      </div>
+      ${state.homeBannerImage?'<p class="small muted" style="margin-top:10px">✓ Banner picture set</p>':'<p class="small muted" style="margin-top:10px">No banner picture selected yet.</p>'}
+      ${state.homeGalleryImage?'<p class="small muted">✓ Gallery picture set</p>':'<p class="small muted">No Gallery picture selected yet.</p>'}
+    </div>
+    <div class="panel" id="dsQuickLinksPanel" style="margin-top:15px">
+      <h2>🔗 Quick Links</h2>
+      <p class="small muted">Add links you use often. If this is empty, Home will guide you back here.</p>
+      <div id="dsQuickLinksRows" style="display:grid;gap:8px"></div>
+      <div class="actions" style="margin-top:10px"><button class="btn" type="button" onclick="addQuickLinkRow()">＋ Add link</button><button class="btn primary" type="button" onclick="saveQuickLinksSettings()">Save Quick Links</button></div>
+      <p class="small muted" style="margin-top:10px">Tip: include <b>https://</b> at the beginning of each link.</p>
     </div>
     <div class="panel" style="margin-top:15px">
       <h2>Appearance</h2>
@@ -1660,6 +1709,7 @@ function settingsPage(){
         <button class="btn" onclick="logout()">Log out</button>
       </div>
     </div>`;
+  const ql=state.homeQuickLinks||[]; const qwrap=document.getElementById("dsQuickLinksRows"); if(qwrap){ql.forEach(x=>addQuickLinkRow(x.label,x.url));}
 }
 function exportData(){
   const data=JSON.stringify(state,null,2);
@@ -2371,7 +2421,7 @@ window.addEventListener('load',function(){
 
 <script>
 /* DearSelf V40 Beta GitHub Pages update checker */
-const DEARSELF_VERSION_NUMBER = 42.5;
+const DEARSELF_VERSION_NUMBER = 42.6;
 async function checkForUpdates(silent=false){
   try{
     const r = await fetch('./version.json?ts='+Date.now(), {cache:'no-store'});
@@ -2385,7 +2435,7 @@ async function checkForUpdates(silent=false){
         '<p class="muted">A newer version of DearSelf is available.</p>';
       modal('<button class="modal-close" onclick="closeModal()">×</button>'+
         '<h2>✨ DearSelf '+esc(v.version || ('V'+remote))+' is available!</h2>'+
-        '<p class="muted">You are currently using V42.5 Beta.</p>'+list+
+        '<p class="muted">You are currently using V42.6 Beta.</p>'+list+
         '<div class="actions" style="margin-top:16px">'+
         '<button class="btn primary" onclick="updateDearSelf()">Update DearSelf</button>'+
         '<button class="btn" onclick="closeModal()">Later</button></div>');

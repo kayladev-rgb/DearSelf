@@ -1,12 +1,12 @@
 {
-  "version": "V42.5 Beta",
-  "versionNumber": 42.5,
+  "version": "V42.6 Beta",
+  "versionNumber": 42.6,
   "notes": [
-    "Fixed Customize Home so widget order is saved and reflected on the actual Home page.",
-    "Added reliable drag-and-drop and pointer/touch reordering.",
-    "Added add, remove, visibility toggle, and reset controls for Home widgets.",
-    "Restored Import existing data on the first-run screen.",
-    "Discord button remains available and shows 'Soon come \u2661'.",
+    "Customizable Home banner with changeable picture and message.",
+    "Home picture widgets can use custom uploaded images.",
+    "Quick Links can be configured in Settings and guide users there when empty.",
+    "Home customization order continues to save and reflect on Home.",
+    "Import existing data remains available on the first-run screen.",
     "No device sync or device-linking system."
   ]
 }
