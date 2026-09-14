@@ -298,7 +298,13 @@ body{font-family:var(--dearself-selected-font)!important}
 .ds-font-option{font-family:var(--preview-font)!important}
 .ds-font-option *{font-family:inherit!important}
 </style>
-<style id="dearself-v39-font-modal-click-layer">#modalWrap{z-index:2147482000}#dearselfFontList{pointer-events:auto!important}</style></head>
+<style id="dearself-v39-font-modal-click-layer">#modalWrap{z-index:2147482000}#dearselfFontList{pointer-events:auto!important}</style><style id="dearself-font-final-fix">
+  html,body,#root,#root *{font-family:var(--dearself-selected-font)!important}
+  #modalWrap{z-index:2147483647!important}
+  #dearselfFontSelect{pointer-events:auto!important;touch-action:manipulation!important;position:relative;z-index:2147483647!important}
+  #dearselfFontPreview{font-family:var(--dearself-selected-font)!important}
+</style>
+</head>
 <body>
 <div id="root"><div class="login"><div class="auth-card"><div class="auth-logo">📔</div><h1>Loading DearSelf…</h1><p>Please wait a moment.</p></div></div></div>
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
@@ -1501,47 +1507,57 @@ function aboutPage(){document.getElementById("content").innerHTML=`<div class="c
 </div>`;}
 
 function changeDearSelfFont(font){
-  if(!DEARSELF_FONTS || !DEARSELF_FONTS[font]) return;
+  if(typeof DEARSELF_FONTS==='undefined' || !DEARSELF_FONTS[font]) return false;
   state.fontFamily=font;
   const family=DEARSELF_FONTS[font];
-  document.documentElement.style.setProperty("--dearself-selected-font",family);
-  document.documentElement.style.setProperty("--font",family);
-  if(document.body) document.body.style.setProperty("font-family",family,"important");
+  const root=document.documentElement;
+  root.style.setProperty('--dearself-selected-font',family);
+  root.style.setProperty('--font',family);
+  root.style.setProperty('--preview-font',family);
+  if(document.body) document.body.style.setProperty('font-family',family,'important');
   try{save();}catch(e){}
-  document.querySelectorAll(".ds-font-option").forEach(function(b){
-    b.classList.toggle("selected",b.dataset.font===font);
-  });
-  const label=document.querySelector("#dearselfFontCurrent");
+  const label=document.getElementById('dearselfFontCurrent');
   if(label) label.textContent=font;
-  document.querySelectorAll("[onclick*='openDearSelfFonts']").forEach(function(b){
-    const t=b.querySelector(".muted"); if(t)t.textContent=font+" ›";
-  });
-  toast("Font changed to "+font+" ♡");
+  const select=document.getElementById('dearselfFontSelect');
+  if(select) select.value=font;
+  if(document.fonts && document.fonts.load){
+    document.fonts.load('16px "'+font+'"').catch(function(){});
+  }
+  toast('Font changed to '+font+' ♡');
+  return true;
 }
+
 function openDearSelfFonts(){
-  const current=state.fontFamily||"Inter";
-  const items=DEARSELF_FONT_NAMES.map(function(f){
-    const selected=f===current?" selected":"";
-    return '<div role="button" tabindex="0" class="ds-font-option'+selected+'" data-font="'+esc(f)+'" style="font-family:'+DEARSELF_FONTS[f]+' !important;display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;padding:13px;margin:0 0 8px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);cursor:pointer;text-align:left;position:relative;z-index:30;pointer-events:auto"><span style="font-size:12px;opacity:.7;pointer-events:none">'+esc(f)+'</span><b style="font-size:17px;pointer-events:none">DearSelf ♡</b></div>';
-  }).join("");
-  modal('<div class="row between" style="margin-bottom:12px"><div><h2 style="margin:0">Fonts</h2><div class="small muted">Choose a font for DearSelf.</div></div><button type="button" class="btn" onclick="closeModal();return false">Done</button></div><div id="dearselfFontList" style="max-height:65vh;overflow:auto;padding:2px">'+items+'</div>');
-  const list=document.getElementById("dearselfFontList");
-  if(list){
-    list.onclick=function(e){
-      const option=e.target.closest(".ds-font-option");
-      if(!option)return;
-      e.preventDefault();
-      e.stopPropagation();
-      changeDearSelfFont(option.getAttribute("data-font"));
-    };
-    list.onkeydown=function(e){
-      if(e.key==="Enter"||e.key===" "){
-        const option=e.target.closest(".ds-font-option");
-        if(option){e.preventDefault();changeDearSelfFont(option.getAttribute("data-font"));}
-      }
-    };
+  const current=state.fontFamily||'Inter';
+  const options=DEARSELF_FONT_NAMES.map(function(f){
+    return '<option value="'+esc(f)+'" '+(f===current?'selected':'')+'>'+esc(f)+'</option>';
+  }).join('');
+  modal(
+    '<div class="row between" style="margin-bottom:14px;gap:10px">'+
+      '<div><h2 style="margin:0">Fonts</h2><div class="small muted">Choose a font for the whole DearSelf app.</div></div>'+
+      '<button type="button" class="btn" onclick="closeModal();return false">Done</button>'+
+    '</div>'+
+    '<div class="field">'+
+      '<label for="dearselfFontSelect">App font</label>'+
+      '<select id="dearselfFontSelect" style="width:100%;font-size:16px;padding:13px;min-height:48px;cursor:pointer">'+options+'</select>'+
+    '</div>'+
+    '<div id="dearselfFontPreview" class="panel" style="margin-top:14px;text-align:center;padding:22px;font-size:24px;line-height:1.35">DearSelf ♡<div class="small muted" style="margin-top:7px">This is a preview of your selected font.</div></div>'
+  );
+  const select=document.getElementById('dearselfFontSelect');
+  const preview=document.getElementById('dearselfFontPreview');
+  function updatePreview(){
+    if(!select) return;
+    const f=select.value;
+    const family=DEARSELF_FONTS[f]||DEARSELF_FONTS.Inter;
+    if(preview) preview.style.setProperty('font-family',family,'important');
+    changeDearSelfFont(f);
+  }
+  if(select){
+    select.addEventListener('change',updatePreview);
+    updatePreview();
   }
 }
+
 function settingsPage(){
   const bytes=new Blob([JSON.stringify(state)]).size;
   document.getElementById("content").innerHTML=pageHead("Settings","A full control center.")+`
@@ -1581,7 +1597,7 @@ function settingsPage(){
       </div>
       <div class="field" style="margin-top:14px;max-width:420px">
         <label>Fonts</label>
-        <button type="button" class="btn primary" style="width:100%;justify-content:space-between;position:relative;z-index:20;pointer-events:auto" onclick="openDearSelfFonts();return false"><span>🔤 Fonts</span><span class="muted">${esc(state.fontFamily||'Inter')} ›</span></button>
+        <button type="button" class="btn primary" style="width:100%;justify-content:space-between;position:relative;z-index:20;pointer-events:auto" onclick="openDearSelfFonts();return false"><span>🔤 Fonts</span><span class="muted" id="dearselfFontCurrent">${esc(state.fontFamily||'Inter')} ›</span></button>
       </div><div style="margin-top:18px"><label class="small muted">Theme</label>${themeGroups()}</div></div>
     
     <div class="panel" style="margin-top:15px">
@@ -1853,12 +1869,10 @@ window.addEventListener("DOMContentLoaded",()=>{ try{ auth(); }catch(e){ console
     const widgets=state.dashboardWidgets||{schedule:true,work:true,tasks:true,exams:true,courses:true,goals:true,life:true,quote:true};
     document.getElementById('content').innerHTML=pageHead('Settings','Make DearSelf feel like your own little digital home.')+`<div class="grid two"><div class="panel"><h2>Profile</h2><div class="row" style="gap:14px;margin-bottom:14px">${profileAvatarMarkup('lg')}<div><b style="font-size:18px">${_esc(state.username||'DearSelf user')}</b><div class="small muted">Your profile photo appears throughout DearSelf.</div></div></div><div class="actions"><button class="btn primary" onclick="profilePhotoPick()">📷 ${state.profilePhoto?'Change photo':'Add profile photo'}</button>${state.profilePhoto?'<button class="btn danger" onclick="removeProfilePhoto()">Remove photo</button>':''}<button class="btn" onclick="renameHome()">Rename home page</button><button class="btn" onclick="changeUsername()">Change name</button><button class="btn" onclick="changePassword()">Change password</button><button class="btn" onclick="setupHomeWidgets()">Customize Home</button><button class="btn" onclick="privacyCenter()">Privacy Center</button><button class="btn" onclick="show('Focus')">Focus Mode</button></div></div><div class="panel"><h2>Privacy</h2><p class="small muted">Everything stays local unless you choose to export or share a backup.</p><div class="actions"><button class="btn ${state.passwordMode==='every'?'primary':''}" onclick="setPasswordMode('every')">Ask every time</button><button class="btn ${state.passwordMode!=='every'?'primary':''}" onclick="setPasswordMode('lock')">Remember me</button></div></div></div>
       <div class="panel" style="margin-top:15px"><h2>🎨 Personalize</h2><div class="form-grid"><div class="field"><label>Start page</label><select onchange="state.startPage=this.value;save()">${['Home','Search','Calendar','Tasks','Notes','Goals & Habits','Finances','Entertainment','School','Personal','Journal'].map(x=>`<option ${state.startPage===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Text size — ${state.textSize}px</label><input type="range" min="10" max="30" value="${state.textSize}" oninput="state.textSize=Number(this.value);save();cssTheme();this.previousElementSibling.textContent='Text size — '+this.value+'px'"></div></div>
-      <div class="ds-font-gallery">
-        <div class="row between" style="margin-bottom:10px;gap:12px;flex-wrap:wrap">
-          <div><b>🔤 App Font</b><div class="small muted">30 choices — click a font to use it throughout DearSelf.</div></div>
-          <span class="tag" id="dearselfFontCurrent">${esc(state.fontFamily||'Inter')}</span>
-        </div>
-        <div class="ds-font-grid">${DEARSELF_FONT_NAMES.map(f=>`<button type="button" class="ds-font-card ${state.fontFamily===f?'selected':''}" style="font-family:${DEARSELF_FONTS[f]}" onclick="changeDearSelfFont('${f.replace(/'/g,"&#39;")}');settingsPage()"><span class="ds-font-name">${esc(f)}</span><span class="ds-font-preview">DearSelf ♡</span></button>`).join('')}</div>
+      <div class="panel" style="margin-top:14px;padding:14px">
+        <button type="button" class="btn" style="width:100%;justify-content:space-between" onclick="openDearSelfFonts();return false">
+          <span>🔤 Fonts</span><span class="muted" id="dearselfFontCurrent">${esc(state.fontFamily||'Inter')} ›</span>
+        </button>
       </div>
       <div style="margin-top:14px"><label class="small muted">Theme</label>${themeGroups()}</div></div>
       <div class="panel" style="margin-top:15px"><div class="row between"><div><h2>🧭 Interactive Tutorial</h2><p class="small muted">Take the guided DearSelf tour again whenever you want.</p></div><button class="btn primary" onclick="showOnboarding(true)">Start Tutorial</button><button class="btn" onclick="toggleHelpBot(true)">✦ Help Bot</button></div></div>
