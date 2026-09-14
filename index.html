@@ -2407,6 +2407,61 @@ window.addEventListener("DOMContentLoaded",function(){
   }catch(e){}
 });
 </script>
+
+<script id="dearself-v40-real-local-sync">
+(function(){
+  const DS_SYNC_KEY='dearself_local_sync_v40';
+  function esc2(x){return typeof esc==='function'?esc(String(x)):String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function ensureSync(){ ensureDeviceIdentity(); state.deviceSync=state.deviceSync||{}; state.deviceSync.localSync=state.deviceSync.localSync||{bridge:'',room:'',role:'',code:'',linked:false,peerName:'',lastSync:null}; return state.deviceSync.localSync; }
+  function bridgeUrl(){ const v=document.getElementById('dsBridgeUrl'); return (v?.value||'').trim().replace(/\/$/,''); }
+  function wsUrl(u){ try{const x=new URL(u); return (x.protocol==='https:'?'wss:':'ws:')+'//'+x.host;}catch{return '';} }
+  function snapshot(){ return {format:'DearSelf Live Sync',version:40,deviceId:state.deviceSync.deviceId,dearSelfId:state.deviceSync.dearSelfId,deviceName:state.deviceSync.localSync?.peerName||'DearSelf device',createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(state))}; }
+  function connectBridge(url, cb){
+    const w=wsUrl(url); if(!w){alert('Enter a valid bridge address, such as http://192.168.1.20:8787');return;}
+    const ws=new WebSocket(w); window.__dearSelfSyncWS=ws;
+    ws.onopen=()=>cb(ws); ws.onerror=()=>alert('Could not connect to the local bridge. Make sure it is running and both devices are on the same network.');
+    ws.onclose=()=>{const s=ensureSync();s.linked=false;save();};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}; handleSyncMessage(m,ws);};
+  }
+  function handleSyncMessage(m,ws){
+    const s=ensureSync();
+    if(m.type==='host-ready'){s.room=m.room;s.code=m.code;s.role='host';s.bridge=document.getElementById('dsBridgeUrl')?.value||s.bridge;save();toast('Pairing code created ♡');renderPairHost();}
+    else if(m.type==='peer-joined'){s.linked=true;s.role='host';save();toast('Device connected ♡');sendSyncSnapshot();}
+    else if(m.type==='joined'){s.linked=true;s.role='guest';save();toast('Device linked ♡');sendSyncSnapshot();}
+    else if(m.type==='error'){alert(m.message||'Sync bridge error.');}
+    else if(m.type==='peer-left'){s.linked=false;save();toast('The other device disconnected.');}
+    else if(m.type==='relay' && m.payload?.type==='snapshot'){receiveSnapshot(m.payload.snapshot);}
+  }
+  function sendMsg(obj){const ws=window.__dearSelfSyncWS;if(ws?.readyState===1)ws.send(JSON.stringify(obj));}
+  function sendSyncSnapshot(){setTimeout(()=>sendMsg({type:'relay',payload:{type:'snapshot',snapshot:snapshot()}}),250);}
+  function receiveSnapshot(remote){
+    if(!remote || remote.dearSelfId!==state.deviceSync.dearSelfId)return alert('The other device uses a different DearSelf ID Key.');
+    const localTime=state.deviceSync.localSync?.lastSync?new Date(state.deviceSync.localSync.lastSync).getTime():0;
+    const remoteTime=new Date(remote.createdAt||0).getTime();
+    if(remoteTime<=localTime){toast('No newer information found ♡');return;}
+    const ok=confirm('✨ New information added\n\n'+(remote.deviceName||'Another device')+' has newer DearSelf information.\n\nReview and replace this device with the newer copy?');
+    if(!ok)return;
+    const keep=JSON.parse(JSON.stringify(state.deviceSync));
+    state={...JSON.parse(JSON.stringify(DEFAULT)),...remote.data,deviceSync:{...keep,lastSync:new Date().toISOString(),linked:true}};
+    save();toast('New information added ♡');show(currentPage);
+    sendMsg({type:'relay',payload:{type:'ack',deviceId:state.deviceSync.deviceId}});
+  }
+  function renderPairHost(){
+    const s=ensureSync();
+    modal(`<h2>🔗 Link another device</h2><p class="muted">Make sure both devices are connected to the <b>same network</b>.</p><div class="panel" style="text-align:center;margin:14px 0"><div class="small muted">Pairing code</div><div style="font-size:38px;font-weight:900;letter-spacing:8px">${esc2(s.code)}</div><div class="small muted" style="margin-top:8px">Keep this screen open while the other device connects.</div><div class="small muted" style="margin-top:8px">Pairing room: <b>${esc2(s.room||"")}</b></div></div><div class="field full"><label>Local bridge address</label><input id="dsBridgeUrl" value="${esc2(s.bridge||'http://localhost:8787')}" placeholder="http://192.168.1.20:8787"></div><div class="actions" style="margin-top:12px"><button class="btn" onclick="dsDeviceLink()">Back</button><button class="btn primary" onclick="dsHostStart()">Start waiting</button></div>`);
+  }
+  window.dsHostStart=function(){const s=ensureSync();const u=bridgeUrl()||s.bridge;if(!u)return alert('Enter the local bridge address.');s.bridge=u;save();connectBridge(u,ws=>ws.send(JSON.stringify({type:'host'})));};
+  window.dsStartPairing=function(){ensureSync();renderPairHost();};
+  window.dsPairExisting=function(){const s=ensureSync();modal(`<h2>🔗 Link existing DearSelf</h2><p class="muted">Make sure both devices are connected to the <b>same network</b>. Enter the bridge address shown on the device running the DearSelf local sync bridge.</p><div class="form-grid"><div class="field full"><label>Local bridge address</label><input id="dsBridgeUrl" value="${esc2(s.bridge||'http://192.168.1.20:8787')}" placeholder="http://192.168.1.20:8787"></div><div class="field full"><label>DearSelf ID Key</label><input id="dsPairId" placeholder="DS-XXXX-XXXX-XXXX"></div><div class="field full"><label>Pairing code</label><input id="dsPairCode" inputmode="numeric" maxlength="6" placeholder="123456"></div><div class="field full"><label>This device name</label><input id="dsPairName" placeholder="My tablet"></div></div><div class="actions" style="margin-top:14px"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="dsFinishPairing()">Connect device</button></div>`);};
+  window.dsFinishPairing=function(){const id=(document.getElementById('dsPairId')?.value||'').trim();const code=(document.getElementById('dsPairCode')?.value||'').trim();const name=(document.getElementById('dsPairName')?.value||'My device').trim();const u=bridgeUrl();if(!/^DS-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/i.test(id))return alert('Enter a valid DearSelf ID Key.');if(!/^\d{6}$/.test(code))return alert('Enter the 6-digit pairing code.');if(!u)return alert('Enter the local bridge address.');const s=ensureSync();s.bridge=u;s.peerName=name;state.deviceSync.dearSelfId=id;save();connectBridge(u,ws=>ws.send(JSON.stringify({type:'join',room:'',code})));};
+  // Host room ID is intentionally carried by the bridge URL only in the websocket session; guests need a room token.
+  // Add a small room field to guest UI by replacing the connect function behavior below.
+  const origFinish=window.dsFinishPairing;
+  window.dsFinishPairing=function(){const id=(document.getElementById('dsPairId')?.value||'').trim();const code=(document.getElementById('dsPairCode')?.value||'').trim();const name=(document.getElementById('dsPairName')?.value||'My device').trim();const u=bridgeUrl();if(!/^DS-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/i.test(id))return alert('Enter a valid DearSelf ID Key.');if(!/^\d{6}$/.test(code))return alert('Enter the 6-digit pairing code.');const room=prompt('Enter the pairing room code shown by the first device (the bridge room ID).');if(!room)return;const s=ensureSync();s.bridge=u;s.peerName=name;state.deviceSync.dearSelfId=id;save();connectBridge(u,ws=>ws.send(JSON.stringify({type:'join',room:String(room).trim(),code})));};
+  window.dsDeviceLink=function(){const s=ensureSync();modal(`<h2>🔗 DearSelf Devices</h2><p class="muted">Link devices without a DearSelf cloud. <b>Both devices must be on the same network.</b></p><div class="panel" style="margin-top:12px"><div class="small muted">Your DearSelf ID Key</div><div style="font-size:21px;font-weight:800;letter-spacing:2px;margin:7px 0">${esc2(state.deviceSync.dearSelfId)}</div><button class="btn" onclick="navigator.clipboard?.writeText('${esc2(state.deviceSync.dearSelfId)}');toast('ID Key copied ♡')">Copy ID Key</button></div><div class="actions" style="margin-top:12px"><button class="btn primary" onclick="dsStartPairing()">＋ Link another device</button><button class="btn" onclick="dsPairExisting()">Link existing device</button></div><div class="panel" style="margin-top:12px"><h3>Connection</h3><div class="small muted">${s.linked?'✓ Device connected':'○ No live device connection'}</div>${s.lastSync?`<div class="small muted">Last sync: ${esc2(s.lastSync)}</div>`:''}<button class="btn" style="margin-top:9px" onclick="dsManualSync()" ${s.linked?'':'disabled'}>Sync now</button></div><button class="btn" style="margin-top:12px" onclick="closeModal()">Done</button>`);};
+  window.dsManualSync=function(){sendSyncSnapshot();toast('Syncing with linked device…');};
+})();
+</script>
 </body>
 </html>
 <script id="dearself-v40-device-link">

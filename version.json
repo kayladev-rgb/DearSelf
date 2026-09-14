@@ -2,11 +2,10 @@
   "version": "V40 Beta",
   "versionNumber": 40,
   "notes": [
-    "Added device linking",
-    "Added DearSelf ID Keys",
-    "Added local device sync",
-    "Improved timetable week separation",
-    "Added 30-font selection",
-    "Added automatic update alerts"
+    "Added 30-font selection and previews",
+    "Added study, timetable, assignment and task notifications",
+    "Added automatic update alerts",
+    "Improved separate timetable weeks and repeat handling",
+    "Added local same-network device linking and sync bridge"
   ]
 }
