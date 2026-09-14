@@ -304,7 +304,7 @@ body{font-family:var(--dearself-selected-font)!important}
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
 <div id="toast" class="toast"></div><div id="dsHelpBot" class="ds-helpbot" aria-label="DearSelf Help Bot"><div class="ds-hb-head"><div class="ds-hb-avatar">✦</div><div style="min-width:0"><h3>DearSelf Help Bot</h3><div class="small muted">Your in-app helper · can do things for you</div></div><button class="ds-hb-conv-toggle" id="dsHelpConvToggle" type="button" title="Conversations" aria-label="Open conversations">☰</button><span class="ds-hb-badge">BETA</span><button class="ds-hb-close" onclick="toggleHelpBot(false)">×</button></div><div class="ds-hb-layout"><aside id="dsHelpHistory" class="ds-hb-history"><div class="ds-hb-history-top"><button class="ds-hb-new" id="dsHelpNewConversation" type="button">＋ New conversation</button><div id="dsHelpHistoryCount" class="ds-hb-history-count"></div></div><div id="dsHelpConvs" class="ds-hb-convs"></div></aside><div class="ds-hb-chatcol"><div id="dsHelpMsgs" class="ds-hb-msgs"></div><div class="ds-hb-input"><textarea id="dsHelpInput" placeholder="Tell me what you want to do…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHelpBot()}"></textarea><button class="ds-hb-send" onclick="sendHelpBot()">Send</button></div></div></div></div><button id="dsHelpFab" class="ds-helpbot-fab" onclick="toggleHelpBot()" title="DearSelf Help Bot">✦</button>
 <script>
-const DEARSELF_VERSION = "V40";
+const DEARSELF_VERSION = "V41";
 const KEY="personal_home_page_v11";
 const DEFAULT={
  homeName:"My DearSelf",username:"",profilePhoto:"",passwordHash:"",passwordPrompt:true,passwordMode:"lock",locked:false,tutorialSeen:false,accessCode:"",isOwner:false,
@@ -2122,7 +2122,7 @@ window.addEventListener('load',function(){
 
 <script>
 /* DearSelf V40 Beta GitHub Pages update checker */
-const DEARSELF_VERSION_NUMBER = 40;
+const DEARSELF_VERSION_NUMBER = 41;
 async function checkForUpdates(silent=false){
   try{
     const r = await fetch('./version.json?ts='+Date.now(), {cache:'no-store'});
@@ -2136,7 +2136,7 @@ async function checkForUpdates(silent=false){
         '<p class="muted">A newer version of DearSelf is available.</p>';
       modal('<button class="modal-close" onclick="closeModal()">×</button>'+
         '<h2>✨ DearSelf '+esc(v.version || ('V'+remote))+' is available!</h2>'+
-        '<p class="muted">You are currently using V40 Beta.</p>'+list+
+        '<p class="muted">You are currently using V41 Beta.</p>'+list+
         '<div class="actions" style="margin-top:16px">'+
         '<button class="btn primary" onclick="updateDearSelf()">Update DearSelf</button>'+
         '<button class="btn" onclick="closeModal()">Later</button></div>');

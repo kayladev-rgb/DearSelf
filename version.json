@@ -1,11 +1,10 @@
 {
-  "version": "V40 Beta",
-  "versionNumber": 40,
+  "version": "V41 Beta",
+  "versionNumber": 41,
   "notes": [
-    "Added 30-font selection and previews",
-    "Added study, timetable, assignment and task notifications",
-    "Added automatic update alerts",
-    "Improved separate timetable weeks and repeat handling",
-    "Added local same-network device linking and sync bridge"
+    "V41 Beta test release.",
+    "Improved Check for Updates with cache-busting and no-cache requests.",
+    "Improved update activation for installed DearSelf PWAs.",
+    "No device sync or device-linking system."
   ]
 }
