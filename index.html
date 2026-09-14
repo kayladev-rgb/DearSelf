@@ -304,7 +304,7 @@ body{font-family:var(--dearself-selected-font)!important}
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
 <div id="toast" class="toast"></div><div id="dsHelpBot" class="ds-helpbot" aria-label="DearSelf Help Bot"><div class="ds-hb-head"><div class="ds-hb-avatar">✦</div><div style="min-width:0"><h3>DearSelf Help Bot</h3><div class="small muted">Your in-app helper · can do things for you</div></div><button class="ds-hb-conv-toggle" id="dsHelpConvToggle" type="button" title="Conversations" aria-label="Open conversations">☰</button><span class="ds-hb-badge">BETA</span><button class="ds-hb-close" onclick="toggleHelpBot(false)">×</button></div><div class="ds-hb-layout"><aside id="dsHelpHistory" class="ds-hb-history"><div class="ds-hb-history-top"><button class="ds-hb-new" id="dsHelpNewConversation" type="button">＋ New conversation</button><div id="dsHelpHistoryCount" class="ds-hb-history-count"></div></div><div id="dsHelpConvs" class="ds-hb-convs"></div></aside><div class="ds-hb-chatcol"><div id="dsHelpMsgs" class="ds-hb-msgs"></div><div class="ds-hb-input"><textarea id="dsHelpInput" placeholder="Tell me what you want to do…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHelpBot()}"></textarea><button class="ds-hb-send" onclick="sendHelpBot()">Send</button></div></div></div></div><button id="dsHelpFab" class="ds-helpbot-fab" onclick="toggleHelpBot()" title="DearSelf Help Bot">✦</button>
 <script>
-const DEARSELF_VERSION = "V42";
+const DEARSELF_VERSION = "V42.1 Beta";
 const KEY="personal_home_page_v11";
 const DEFAULT={
  homeName:"My DearSelf",username:"",profilePhoto:"",passwordHash:"",passwordPrompt:true,passwordMode:"lock",locked:false,tutorialSeen:false,accessCode:"",isOwner:false,
@@ -1619,6 +1619,66 @@ function exportData(){
     a.href=URL.createObjectURL(blob);a.download="home_page_backup.json";a.click();URL.revokeObjectURL(a.href);
   }
 }
+async function shareDataFromWelcome(){
+  try{
+    const payload=JSON.stringify(state,null,2);
+    const file=new File([payload],"my-dearself-data.json",{type:"application/json"});
+    const shareData={
+      title:"My DearSelf Data",
+      text:"Here is my DearSelf data backup.",
+      files:[file]
+    };
+
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+      await navigator.share(shareData);
+      return;
+    }
+
+    // Desktop/browser fallback: download the JSON and open Gmail compose.
+    const blob=new Blob([payload],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download="my-dearself-data.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+    const subject=encodeURIComponent("My DearSelf Data");
+    const body=encodeURIComponent("Here is my DearSelf data backup. I have attached my-dearself-data.json.\n\nPlease handle this file carefully.");
+    window.location.href="https://mail.google.com/mail/?view=cm&fs=1&su="+subject+"&body="+body;
+    toast("Your backup was downloaded. Gmail compose is opening ♡");
+  }catch(e){
+    if(e && e.name==="AbortError") return;
+    alert("Could not share your DearSelf data. Please try again.");
+    console.warn("DearSelf share failed:",e);
+  }
+}
+
+
+async function shareDearSelfData(){
+  try{
+    const payload=JSON.stringify(state,null,2);
+    const file=new File([payload],"my-dearself-data.json",{type:"application/json"});
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+      await navigator.share({title:"My DearSelf Data",text:"Here is my DearSelf data backup.",files:[file]});
+      return;
+    }
+    const blob=new Blob([payload],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download="my-dearself-data.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const subject=encodeURIComponent("My DearSelf Data");
+    const body=encodeURIComponent("Here is my DearSelf data backup. I have attached my-dearself-data.json.\n\nPlease handle this file carefully.");
+    window.open("https://mail.google.com/mail/?view=cm&fs=1&su="+subject+"&body="+body,"_blank");
+  }catch(e){
+    if(e && e.name==="AbortError") return;
+    alert("Could not share your DearSelf data.");
+  }
+}
 function importDataFromWelcome(){
   if(window.AndroidBackup){
     // The Android bridge will call onWelcomeImportSuccess(jsonStr).
@@ -1720,12 +1780,20 @@ function showFirstSetup(){
     <div class="field"><label>USERNAME</label><input id="setupUser" autocomplete="nickname" autofocus placeholder="What should we call you?"></div>
     <div class="auth-actions"><button type="button" id="setupUserBtn" class="btn primary">Continue →</button></div>
     <div style="margin:16px 0 4px;text-align:center;color:var(--muted)">Already have a DearSelf backup?</div>
-    <div class="auth-actions"><button type="button" id="welcomeImportBtn" class="btn">📥 Import existing data</button></div>
-    <p class="small muted" style="text-align:center;margin-top:8px">Restore a backup from another DearSelf installation without creating a new account first.</p>`);
+    <div class="auth-actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <button type="button" id="welcomeImportBtn" class="btn">📥 Import existing data</button>
+      <button type="button" id="welcomeShareBtn" class="btn">📤 Share my data</button>
+    </div>
+    <p class="small muted" style="text-align:center;margin-top:8px">Restore or share a DearSelf backup before creating a new account.</p>
+    <div class="small" style="text-align:center;margin-top:10px;padding:10px;border-radius:12px;background:rgba(255,182,193,.14);border:1px solid rgba(255,182,193,.35)">
+      <strong>⚠️ Be careful sharing your data.</strong><br>
+      This was originally meant to share data between devices, so your backup may contain personal information from DearSelf.
+    </div>`);
   const go=()=>{const u=v('setupUser').trim();if(!u)return alert('Please enter a name.'); showPasswordSetup(u);};
   document.getElementById('setupUserBtn').addEventListener('click',go);
   document.getElementById('setupUser').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
   document.getElementById('welcomeImportBtn').addEventListener('click',importDataFromWelcome);
+  document.getElementById('welcomeShareBtn').addEventListener('click',shareDataFromWelcome);
 }
 function showPasswordSetup(u){
   authShell("Let's protect your DearSelf","Create a password to keep your personal information private.",`
@@ -2169,7 +2237,7 @@ window.addEventListener('load',function(){
 
 <script>
 /* DearSelf V40 Beta GitHub Pages update checker */
-const DEARSELF_VERSION_NUMBER = 42;
+const DEARSELF_VERSION_NUMBER = 42.1;
 async function checkForUpdates(silent=false){
   try{
     const r = await fetch('./version.json?ts='+Date.now(), {cache:'no-store'});
@@ -2183,7 +2251,7 @@ async function checkForUpdates(silent=false){
         '<p class="muted">A newer version of DearSelf is available.</p>';
       modal('<button class="modal-close" onclick="closeModal()">×</button>'+
         '<h2>✨ DearSelf '+esc(v.version || ('V'+remote))+' is available!</h2>'+
-        '<p class="muted">You are currently using V42 Beta.</p>'+list+
+        '<p class="muted">You are currently using V42.1 Beta.</p>'+list+
         '<div class="actions" style="margin-top:16px">'+
         '<button class="btn primary" onclick="updateDearSelf()">Update DearSelf</button>'+
         '<button class="btn" onclick="closeModal()">Later</button></div>');

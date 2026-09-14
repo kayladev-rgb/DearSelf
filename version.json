@@ -1,11 +1,12 @@
 {
-  "version": "V42 Beta",
-  "versionNumber": 42,
+  "version": "V42.1 Beta",
+  "versionNumber": 42.1,
   "notes": [
-    "V42 Beta test release.",
-    "Added Import existing data to the first-time DearSelf welcome screen.",
-    "You can restore a DearSelf backup before creating a new username.",
-    "Kept the V41 update-check improvements.",
+    "V42.1 Beta test release.",
+    "Added Share my data to the DearSelf welcome screen.",
+    "Uses the device share sheet when supported so the JSON backup can be shared as a file.",
+    "Desktop/browser fallback downloads the JSON and opens a Gmail compose window with the requested subject and message.",
+    "Added a warning to be careful when sharing DearSelf data.",
     "No device sync or device-linking system."
   ]
 }
