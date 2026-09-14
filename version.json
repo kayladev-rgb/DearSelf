@@ -1,11 +1,12 @@
 {
-  "version": "V42.4 Beta",
-  "versionNumber": 42.4,
+  "version": "V42.5 Beta",
+  "versionNumber": 42.5,
   "notes": [
-    "Fully customizable Home page.",
-    "Redesigned Customize Home with Available Widgets and Home Preview.",
-    "Add, remove, toggle, and drag widgets to reorder them.",
-    "Touch-friendly reordering for tablets and touch-enabled laptops.",
+    "Fixed Customize Home so widget order is saved and reflected on the actual Home page.",
+    "Added reliable drag-and-drop and pointer/touch reordering.",
+    "Added add, remove, visibility toggle, and reset controls for Home widgets.",
+    "Restored Import existing data on the first-run screen.",
+    "Discord button remains available and shows 'Soon come \u2661'.",
     "No device sync or device-linking system."
   ]
 }
