@@ -1,12 +1,12 @@
 {
-  "version": "V39 Beta",
-  "versionNumber": 39,
+  "version": "V40 Beta",
+  "versionNumber": 40,
   "notes": [
-    "30 app-wide font choices",
-    "Study session, timetable, assignment, and to-do/task notifications",
-    "Notification controls and timing in Settings",
-    "Toast messages moved above the Help Bot",
-    "Web/GitHub Pages update checker retained and upgraded to V39 Beta",
-    "\u2713 Automatic update alerts when a newer DearSelf version is detected"
+    "Added device linking",
+    "Added DearSelf ID Keys",
+    "Added local device sync",
+    "Improved timetable week separation",
+    "Added 30-font selection",
+    "Added automatic update alerts"
   ]
 }
