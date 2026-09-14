@@ -1,11 +1,10 @@
 {
-  "version": "V43.1 Beta",
-  "versionNumber": 43.1,
+  "version": "V43.3 Beta",
+  "versionNumber": 43.3,
   "notes": [
-    "Fixed Home Banner editing.",
-    "Change picture now opens the image picker reliably.",
-    "Remove picture now works correctly.",
-    "Banner message editing remains available.",
-    "Preserves the V43 theme system and existing features."
+    "V43.3 Beta release.",
+    "Includes the V43.2 Beta fixes and features.",
+    "Home Banner editing and removal remain available.",
+    "Preserves the existing theme system and user data."
   ]
 }
