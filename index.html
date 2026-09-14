@@ -304,7 +304,7 @@ body{font-family:var(--dearself-selected-font)!important}
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
 <div id="toast" class="toast"></div><div id="dsHelpBot" class="ds-helpbot" aria-label="DearSelf Help Bot"><div class="ds-hb-head"><div class="ds-hb-avatar">✦</div><div style="min-width:0"><h3>DearSelf Help Bot</h3><div class="small muted">Your in-app helper · can do things for you</div></div><button class="ds-hb-conv-toggle" id="dsHelpConvToggle" type="button" title="Conversations" aria-label="Open conversations">☰</button><span class="ds-hb-badge">BETA</span><button class="ds-hb-close" onclick="toggleHelpBot(false)">×</button></div><div class="ds-hb-layout"><aside id="dsHelpHistory" class="ds-hb-history"><div class="ds-hb-history-top"><button class="ds-hb-new" id="dsHelpNewConversation" type="button">＋ New conversation</button><div id="dsHelpHistoryCount" class="ds-hb-history-count"></div></div><div id="dsHelpConvs" class="ds-hb-convs"></div></aside><div class="ds-hb-chatcol"><div id="dsHelpMsgs" class="ds-hb-msgs"></div><div class="ds-hb-input"><textarea id="dsHelpInput" placeholder="Tell me what you want to do…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHelpBot()}"></textarea><button class="ds-hb-send" onclick="sendHelpBot()">Send</button></div></div></div></div><button id="dsHelpFab" class="ds-helpbot-fab" onclick="toggleHelpBot()" title="DearSelf Help Bot">✦</button>
 <script>
-const DEARSELF_VERSION = "V42.1 Beta";
+const DEARSELF_VERSION = "V42.2 Beta";
 const KEY="personal_home_page_v11";
 const DEFAULT={
  homeName:"My DearSelf",username:"",profilePhoto:"",passwordHash:"",passwordPrompt:true,passwordMode:"lock",locked:false,tutorialSeen:false,accessCode:"",isOwner:false,
@@ -1599,6 +1599,15 @@ function settingsPage(){
       <p class="small muted" style="margin-top:10px">Reminders are kept locally. Device/browser notifications depend on notification permission and whether DearSelf is open or allowed to run in the background.</p>
     </div><div class="panel" style="margin-top:15px">
       <h2>Data & Account</h2>
+<div class="card" style="margin-top:12px">
+  <h3 style="margin-top:0">Your Data</h3>
+  <p class="small muted">Import or share your DearSelf backup. Be careful sharing your data; this was originally meant to share between devices.</p>
+  <div class="actions">
+    <button class="btn" type="button" onclick="importData()">📥 Import Data</button>
+    <button class="btn" type="button" onclick="shareDearSelfData()">📤 Share My Data</button>
+  </div>
+</div>
+
       <div class="actions">
         <button class="btn" onclick="exportData()">Export backup</button>
         <button class="btn" onclick="importData()">Import backup</button>
@@ -1779,12 +1788,6 @@ function showFirstSetup(){
   authShell("What would you like to be called?","This will be your username throughout the app.",`
     <div class="field"><label>USERNAME</label><input id="setupUser" autocomplete="nickname" autofocus placeholder="What should we call you?"></div>
     <div class="auth-actions"><button type="button" id="setupUserBtn" class="btn primary">Continue →</button></div>
-    <div style="margin:16px 0 4px;text-align:center;color:var(--muted)">Already have a DearSelf backup?</div>
-    <div class="auth-actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-      <button type="button" id="welcomeImportBtn" class="btn">📥 Import existing data</button>
-      <button type="button" id="welcomeShareBtn" class="btn">📤 Share my data</button>
-    </div>
-    <p class="small muted" style="text-align:center;margin-top:8px">Restore or share a DearSelf backup before creating a new account.</p>
     <div class="small" style="text-align:center;margin-top:10px;padding:10px;border-radius:12px;background:rgba(255,182,193,.14);border:1px solid rgba(255,182,193,.35)">
       <strong>⚠️ Be careful sharing your data.</strong><br>
       This was originally meant to share data between devices, so your backup may contain personal information from DearSelf.
@@ -1792,8 +1795,6 @@ function showFirstSetup(){
   const go=()=>{const u=v('setupUser').trim();if(!u)return alert('Please enter a name.'); showPasswordSetup(u);};
   document.getElementById('setupUserBtn').addEventListener('click',go);
   document.getElementById('setupUser').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
-  document.getElementById('welcomeImportBtn').addEventListener('click',importDataFromWelcome);
-  document.getElementById('welcomeShareBtn').addEventListener('click',shareDataFromWelcome);
 }
 function showPasswordSetup(u){
   authShell("Let's protect your DearSelf","Create a password to keep your personal information private.",`
@@ -2237,7 +2238,7 @@ window.addEventListener('load',function(){
 
 <script>
 /* DearSelf V40 Beta GitHub Pages update checker */
-const DEARSELF_VERSION_NUMBER = 42.1;
+const DEARSELF_VERSION_NUMBER = 42.2;
 async function checkForUpdates(silent=false){
   try{
     const r = await fetch('./version.json?ts='+Date.now(), {cache:'no-store'});
@@ -2251,7 +2252,7 @@ async function checkForUpdates(silent=false){
         '<p class="muted">A newer version of DearSelf is available.</p>';
       modal('<button class="modal-close" onclick="closeModal()">×</button>'+
         '<h2>✨ DearSelf '+esc(v.version || ('V'+remote))+' is available!</h2>'+
-        '<p class="muted">You are currently using V42.1 Beta.</p>'+list+
+        '<p class="muted">You are currently using V42.2 Beta.</p>'+list+
         '<div class="actions" style="margin-top:16px">'+
         '<button class="btn primary" onclick="updateDearSelf()">Update DearSelf</button>'+
         '<button class="btn" onclick="closeModal()">Later</button></div>');

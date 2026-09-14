@@ -1,4 +1,4 @@
-const CACHE = 'dearself-v42-1-beta';
+const CACHE = 'dearself-v42-2-beta';
 
 const APP_SHELL = [
   './',

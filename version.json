@@ -1,12 +1,11 @@
 {
-  "version": "V42.1 Beta",
-  "versionNumber": 42.1,
+  "version": "V42.2 Beta",
+  "versionNumber": 42.2,
   "notes": [
-    "V42.1 Beta test release.",
-    "Added Share my data to the DearSelf welcome screen.",
-    "Uses the device share sheet when supported so the JSON backup can be shared as a file.",
-    "Desktop/browser fallback downloads the JSON and opens a Gmail compose window with the requested subject and message.",
+    "Moved Import Existing Data off the first-time welcome screen.",
+    "Moved Share My Data into Settings.",
     "Added a warning to be careful when sharing DearSelf data.",
+    "Kept the V42.1 sharing behavior.",
     "No device sync or device-linking system."
   ]
 }
