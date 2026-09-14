@@ -298,13 +298,7 @@ body{font-family:var(--dearself-selected-font)!important}
 .ds-font-option{font-family:var(--preview-font)!important}
 .ds-font-option *{font-family:inherit!important}
 </style>
-<style id="dearself-v39-font-modal-click-layer">#modalWrap{z-index:2147482000}#dearselfFontList{pointer-events:auto!important}</style><style id="dearself-font-final-fix">
-  html,body,#root,#root *{font-family:var(--dearself-selected-font)!important}
-  #modalWrap{z-index:2147483647!important}
-  #dearselfFontSelect{pointer-events:auto!important;touch-action:manipulation!important;position:relative;z-index:2147483647!important}
-  #dearselfFontPreview{font-family:var(--dearself-selected-font)!important}
-</style>
-</head>
+<style id="dearself-v39-font-modal-click-layer">#modalWrap{z-index:2147482000}#dearselfFontList{pointer-events:auto!important}</style></head>
 <body>
 <div id="root"><div class="login"><div class="auth-card"><div class="auth-logo">📔</div><h1>Loading DearSelf…</h1><p>Please wait a moment.</p></div></div></div>
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
@@ -1507,57 +1501,47 @@ function aboutPage(){document.getElementById("content").innerHTML=`<div class="c
 </div>`;}
 
 function changeDearSelfFont(font){
-  if(typeof DEARSELF_FONTS==='undefined' || !DEARSELF_FONTS[font]) return false;
+  if(!DEARSELF_FONTS || !DEARSELF_FONTS[font]) return;
   state.fontFamily=font;
   const family=DEARSELF_FONTS[font];
-  const root=document.documentElement;
-  root.style.setProperty('--dearself-selected-font',family);
-  root.style.setProperty('--font',family);
-  root.style.setProperty('--preview-font',family);
-  if(document.body) document.body.style.setProperty('font-family',family,'important');
+  document.documentElement.style.setProperty("--dearself-selected-font",family);
+  document.documentElement.style.setProperty("--font",family);
+  if(document.body) document.body.style.setProperty("font-family",family,"important");
   try{save();}catch(e){}
-  const label=document.getElementById('dearselfFontCurrent');
+  document.querySelectorAll(".ds-font-option").forEach(function(b){
+    b.classList.toggle("selected",b.dataset.font===font);
+  });
+  const label=document.querySelector("#dearselfFontCurrent");
   if(label) label.textContent=font;
-  const select=document.getElementById('dearselfFontSelect');
-  if(select) select.value=font;
-  if(document.fonts && document.fonts.load){
-    document.fonts.load('16px "'+font+'"').catch(function(){});
-  }
-  toast('Font changed to '+font+' ♡');
-  return true;
+  document.querySelectorAll("[onclick*='openDearSelfFonts']").forEach(function(b){
+    const t=b.querySelector(".muted"); if(t)t.textContent=font+" ›";
+  });
+  toast("Font changed to "+font+" ♡");
 }
-
 function openDearSelfFonts(){
-  const current=state.fontFamily||'Inter';
-  const options=DEARSELF_FONT_NAMES.map(function(f){
-    return '<option value="'+esc(f)+'" '+(f===current?'selected':'')+'>'+esc(f)+'</option>';
-  }).join('');
-  modal(
-    '<div class="row between" style="margin-bottom:14px;gap:10px">'+
-      '<div><h2 style="margin:0">Fonts</h2><div class="small muted">Choose a font for the whole DearSelf app.</div></div>'+
-      '<button type="button" class="btn" onclick="closeModal();return false">Done</button>'+
-    '</div>'+
-    '<div class="field">'+
-      '<label for="dearselfFontSelect">App font</label>'+
-      '<select id="dearselfFontSelect" style="width:100%;font-size:16px;padding:13px;min-height:48px;cursor:pointer">'+options+'</select>'+
-    '</div>'+
-    '<div id="dearselfFontPreview" class="panel" style="margin-top:14px;text-align:center;padding:22px;font-size:24px;line-height:1.35">DearSelf ♡<div class="small muted" style="margin-top:7px">This is a preview of your selected font.</div></div>'
-  );
-  const select=document.getElementById('dearselfFontSelect');
-  const preview=document.getElementById('dearselfFontPreview');
-  function updatePreview(){
-    if(!select) return;
-    const f=select.value;
-    const family=DEARSELF_FONTS[f]||DEARSELF_FONTS.Inter;
-    if(preview) preview.style.setProperty('font-family',family,'important');
-    changeDearSelfFont(f);
-  }
-  if(select){
-    select.addEventListener('change',updatePreview);
-    updatePreview();
+  const current=state.fontFamily||"Inter";
+  const items=DEARSELF_FONT_NAMES.map(function(f){
+    const selected=f===current?" selected":"";
+    return '<div role="button" tabindex="0" class="ds-font-option'+selected+'" data-font="'+esc(f)+'" style="font-family:'+DEARSELF_FONTS[f]+' !important;display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;padding:13px;margin:0 0 8px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);cursor:pointer;text-align:left;position:relative;z-index:30;pointer-events:auto"><span style="font-size:12px;opacity:.7;pointer-events:none">'+esc(f)+'</span><b style="font-size:17px;pointer-events:none">DearSelf ♡</b></div>';
+  }).join("");
+  modal('<div class="row between" style="margin-bottom:12px"><div><h2 style="margin:0">Fonts</h2><div class="small muted">Choose a font for DearSelf.</div></div><button type="button" class="btn" onclick="closeModal();return false">Done</button></div><div id="dearselfFontList" style="max-height:65vh;overflow:auto;padding:2px">'+items+'</div>');
+  const list=document.getElementById("dearselfFontList");
+  if(list){
+    list.onclick=function(e){
+      const option=e.target.closest(".ds-font-option");
+      if(!option)return;
+      e.preventDefault();
+      e.stopPropagation();
+      changeDearSelfFont(option.getAttribute("data-font"));
+    };
+    list.onkeydown=function(e){
+      if(e.key==="Enter"||e.key===" "){
+        const option=e.target.closest(".ds-font-option");
+        if(option){e.preventDefault();changeDearSelfFont(option.getAttribute("data-font"));}
+      }
+    };
   }
 }
-
 function settingsPage(){
   const bytes=new Blob([JSON.stringify(state)]).size;
   document.getElementById("content").innerHTML=pageHead("Settings","A full control center.")+`
@@ -1597,7 +1581,7 @@ function settingsPage(){
       </div>
       <div class="field" style="margin-top:14px;max-width:420px">
         <label>Fonts</label>
-        <button type="button" class="btn primary" style="width:100%;justify-content:space-between;position:relative;z-index:20;pointer-events:auto" onclick="openDearSelfFonts();return false"><span>🔤 Fonts</span><span class="muted" id="dearselfFontCurrent">${esc(state.fontFamily||'Inter')} ›</span></button>
+        <button type="button" class="btn primary" style="width:100%;justify-content:space-between;position:relative;z-index:20;pointer-events:auto" onclick="openDearSelfFonts();return false"><span>🔤 Fonts</span><span class="muted">${esc(state.fontFamily||'Inter')} ›</span></button>
       </div><div style="margin-top:18px"><label class="small muted">Theme</label>${themeGroups()}</div></div>
     
     <div class="panel" style="margin-top:15px">
@@ -1869,10 +1853,12 @@ window.addEventListener("DOMContentLoaded",()=>{ try{ auth(); }catch(e){ console
     const widgets=state.dashboardWidgets||{schedule:true,work:true,tasks:true,exams:true,courses:true,goals:true,life:true,quote:true};
     document.getElementById('content').innerHTML=pageHead('Settings','Make DearSelf feel like your own little digital home.')+`<div class="grid two"><div class="panel"><h2>Profile</h2><div class="row" style="gap:14px;margin-bottom:14px">${profileAvatarMarkup('lg')}<div><b style="font-size:18px">${_esc(state.username||'DearSelf user')}</b><div class="small muted">Your profile photo appears throughout DearSelf.</div></div></div><div class="actions"><button class="btn primary" onclick="profilePhotoPick()">📷 ${state.profilePhoto?'Change photo':'Add profile photo'}</button>${state.profilePhoto?'<button class="btn danger" onclick="removeProfilePhoto()">Remove photo</button>':''}<button class="btn" onclick="renameHome()">Rename home page</button><button class="btn" onclick="changeUsername()">Change name</button><button class="btn" onclick="changePassword()">Change password</button><button class="btn" onclick="setupHomeWidgets()">Customize Home</button><button class="btn" onclick="privacyCenter()">Privacy Center</button><button class="btn" onclick="show('Focus')">Focus Mode</button></div></div><div class="panel"><h2>Privacy</h2><p class="small muted">Everything stays local unless you choose to export or share a backup.</p><div class="actions"><button class="btn ${state.passwordMode==='every'?'primary':''}" onclick="setPasswordMode('every')">Ask every time</button><button class="btn ${state.passwordMode!=='every'?'primary':''}" onclick="setPasswordMode('lock')">Remember me</button></div></div></div>
       <div class="panel" style="margin-top:15px"><h2>🎨 Personalize</h2><div class="form-grid"><div class="field"><label>Start page</label><select onchange="state.startPage=this.value;save()">${['Home','Search','Calendar','Tasks','Notes','Goals & Habits','Finances','Entertainment','School','Personal','Journal'].map(x=>`<option ${state.startPage===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Text size — ${state.textSize}px</label><input type="range" min="10" max="30" value="${state.textSize}" oninput="state.textSize=Number(this.value);save();cssTheme();this.previousElementSibling.textContent='Text size — '+this.value+'px'"></div></div>
-      <div class="panel" style="margin-top:14px;padding:14px">
-        <button type="button" class="btn" style="width:100%;justify-content:space-between" onclick="openDearSelfFonts();return false">
-          <span>🔤 Fonts</span><span class="muted" id="dearselfFontCurrent">${esc(state.fontFamily||'Inter')} ›</span>
-        </button>
+      <div class="ds-font-gallery">
+        <div class="row between" style="margin-bottom:10px;gap:12px;flex-wrap:wrap">
+          <div><b>🔤 App Font</b><div class="small muted">30 choices — click a font to use it throughout DearSelf.</div></div>
+          <span class="tag" id="dearselfFontCurrent">${esc(state.fontFamily||'Inter')}</span>
+        </div>
+        <div class="ds-font-grid">${DEARSELF_FONT_NAMES.map(f=>`<button type="button" class="ds-font-card ${state.fontFamily===f?'selected':''}" style="font-family:${DEARSELF_FONTS[f]}" onclick="changeDearSelfFont('${f.replace(/'/g,"&#39;")}');settingsPage()"><span class="ds-font-name">${esc(f)}</span><span class="ds-font-preview">DearSelf ♡</span></button>`).join('')}</div>
       </div>
       <div style="margin-top:14px"><label class="small muted">Theme</label>${themeGroups()}</div></div>
       <div class="panel" style="margin-top:15px"><div class="row between"><div><h2>🧭 Interactive Tutorial</h2><p class="small muted">Take the guided DearSelf tour again whenever you want.</p></div><button class="btn primary" onclick="showOnboarding(true)">Start Tutorial</button><button class="btn" onclick="toggleHelpBot(true)">✦ Help Bot</button></div></div>
@@ -2135,7 +2121,7 @@ window.addEventListener('load',function(){
 </script>
 
 <script>
-/* DearSelf V39 Beta GitHub Pages update checker */
+/* DearSelf V40 Beta GitHub Pages update checker */
 const DEARSELF_VERSION_NUMBER = 40;
 async function checkForUpdates(silent=false){
   try{
@@ -2150,7 +2136,7 @@ async function checkForUpdates(silent=false){
         '<p class="muted">A newer version of DearSelf is available.</p>';
       modal('<button class="modal-close" onclick="closeModal()">×</button>'+
         '<h2>✨ DearSelf '+esc(v.version || ('V'+remote))+' is available!</h2>'+
-        '<p class="muted">You are currently using V39 Beta.</p>'+list+
+        '<p class="muted">You are currently using V40 Beta.</p>'+list+
         '<div class="actions" style="margin-top:16px">'+
         '<button class="btn primary" onclick="updateDearSelf()">Update DearSelf</button>'+
         '<button class="btn" onclick="closeModal()">Later</button></div>');
@@ -2422,113 +2408,8 @@ window.addEventListener("DOMContentLoaded",function(){
 });
 </script>
 
-<script id="dearself-v40-real-local-sync">
-(function(){
-  const DS_SYNC_KEY='dearself_local_sync_v40';
-  function esc2(x){return typeof esc==='function'?esc(String(x)):String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function ensureSync(){ ensureDeviceIdentity(); state.deviceSync=state.deviceSync||{}; state.deviceSync.localSync=state.deviceSync.localSync||{bridge:'',room:'',role:'',code:'',linked:false,peerName:'',lastSync:null}; return state.deviceSync.localSync; }
-  function bridgeUrl(){ const v=document.getElementById('dsBridgeUrl'); return (v?.value||'').trim().replace(/\/$/,''); }
-  function wsUrl(u){ try{const x=new URL(u); return (x.protocol==='https:'?'wss:':'ws:')+'//'+x.host;}catch{return '';} }
-  function snapshot(){ return {format:'DearSelf Live Sync',version:40,deviceId:state.deviceSync.deviceId,dearSelfId:state.deviceSync.dearSelfId,deviceName:state.deviceSync.localSync?.peerName||'DearSelf device',createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(state))}; }
-  function connectBridge(url, cb){
-    const w=wsUrl(url); if(!w){alert('Enter a valid bridge address, such as http://192.168.1.20:8787');return;}
-    const ws=new WebSocket(w); window.__dearSelfSyncWS=ws;
-    ws.onopen=()=>cb(ws); ws.onerror=()=>alert('Could not connect to the local bridge. Make sure it is running and both devices are on the same network.');
-    ws.onclose=()=>{const s=ensureSync();s.linked=false;save();};
-    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}; handleSyncMessage(m,ws);};
-  }
-  function handleSyncMessage(m,ws){
-    const s=ensureSync();
-    if(m.type==='host-ready'){s.room=m.room;s.code=m.code;s.role='host';s.bridge=document.getElementById('dsBridgeUrl')?.value||s.bridge;save();toast('Pairing code created ♡');renderPairHost();}
-    else if(m.type==='peer-joined'){s.linked=true;s.role='host';save();toast('Device connected ♡');sendSyncSnapshot();}
-    else if(m.type==='joined'){s.linked=true;s.role='guest';save();toast('Device linked ♡');sendSyncSnapshot();}
-    else if(m.type==='error'){alert(m.message||'Sync bridge error.');}
-    else if(m.type==='peer-left'){s.linked=false;save();toast('The other device disconnected.');}
-    else if(m.type==='relay' && m.payload?.type==='snapshot'){receiveSnapshot(m.payload.snapshot);}
-  }
-  function sendMsg(obj){const ws=window.__dearSelfSyncWS;if(ws?.readyState===1)ws.send(JSON.stringify(obj));}
-  function sendSyncSnapshot(){setTimeout(()=>sendMsg({type:'relay',payload:{type:'snapshot',snapshot:snapshot()}}),250);}
-  function receiveSnapshot(remote){
-    if(!remote || remote.dearSelfId!==state.deviceSync.dearSelfId)return alert('The other device uses a different DearSelf ID Key.');
-    const localTime=state.deviceSync.localSync?.lastSync?new Date(state.deviceSync.localSync.lastSync).getTime():0;
-    const remoteTime=new Date(remote.createdAt||0).getTime();
-    if(remoteTime<=localTime){toast('No newer information found ♡');return;}
-    const ok=confirm('✨ New information added\n\n'+(remote.deviceName||'Another device')+' has newer DearSelf information.\n\nReview and replace this device with the newer copy?');
-    if(!ok)return;
-    const keep=JSON.parse(JSON.stringify(state.deviceSync));
-    state={...JSON.parse(JSON.stringify(DEFAULT)),...remote.data,deviceSync:{...keep,lastSync:new Date().toISOString(),linked:true}};
-    save();toast('New information added ♡');show(currentPage);
-    sendMsg({type:'relay',payload:{type:'ack',deviceId:state.deviceSync.deviceId}});
-  }
-  function renderPairHost(){
-    const s=ensureSync();
-    modal(`<h2>🔗 Link another device</h2><p class="muted">Make sure both devices are connected to the <b>same network</b>.</p><div class="panel" style="text-align:center;margin:14px 0"><div class="small muted">Pairing code</div><div style="font-size:38px;font-weight:900;letter-spacing:8px">${esc2(s.code)}</div><div class="small muted" style="margin-top:8px">Keep this screen open while the other device connects.</div><div class="small muted" style="margin-top:8px">Pairing room: <b>${esc2(s.room||"")}</b></div></div><div class="field full"><label>Local bridge address</label><input id="dsBridgeUrl" value="${esc2(s.bridge||'http://localhost:8787')}" placeholder="http://192.168.1.20:8787"></div><div class="actions" style="margin-top:12px"><button class="btn" onclick="dsDeviceLink()">Back</button><button class="btn primary" onclick="dsHostStart()">Start waiting</button></div>`);
-  }
-  window.dsHostStart=function(){const s=ensureSync();const u=bridgeUrl()||s.bridge;if(!u)return alert('Enter the local bridge address.');s.bridge=u;save();connectBridge(u,ws=>ws.send(JSON.stringify({type:'host'})));};
-  window.dsStartPairing=function(){ensureSync();renderPairHost();};
-  window.dsPairExisting=function(){const s=ensureSync();modal(`<h2>🔗 Link existing DearSelf</h2><p class="muted">Make sure both devices are connected to the <b>same network</b>. Enter the bridge address shown on the device running the DearSelf local sync bridge.</p><div class="form-grid"><div class="field full"><label>Local bridge address</label><input id="dsBridgeUrl" value="${esc2(s.bridge||'http://192.168.1.20:8787')}" placeholder="http://192.168.1.20:8787"></div><div class="field full"><label>DearSelf ID Key</label><input id="dsPairId" placeholder="DS-XXXX-XXXX-XXXX"></div><div class="field full"><label>Pairing code</label><input id="dsPairCode" inputmode="numeric" maxlength="6" placeholder="123456"></div><div class="field full"><label>This device name</label><input id="dsPairName" placeholder="My tablet"></div></div><div class="actions" style="margin-top:14px"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="dsFinishPairing()">Connect device</button></div>`);};
-  window.dsFinishPairing=function(){const id=(document.getElementById('dsPairId')?.value||'').trim();const code=(document.getElementById('dsPairCode')?.value||'').trim();const name=(document.getElementById('dsPairName')?.value||'My device').trim();const u=bridgeUrl();if(!/^DS-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/i.test(id))return alert('Enter a valid DearSelf ID Key.');if(!/^\d{6}$/.test(code))return alert('Enter the 6-digit pairing code.');if(!u)return alert('Enter the local bridge address.');const s=ensureSync();s.bridge=u;s.peerName=name;state.deviceSync.dearSelfId=id;save();connectBridge(u,ws=>ws.send(JSON.stringify({type:'join',room:'',code})));};
-  // Host room ID is intentionally carried by the bridge URL only in the websocket session; guests need a room token.
-  // Add a small room field to guest UI by replacing the connect function behavior below.
-  const origFinish=window.dsFinishPairing;
-  window.dsFinishPairing=function(){const id=(document.getElementById('dsPairId')?.value||'').trim();const code=(document.getElementById('dsPairCode')?.value||'').trim();const name=(document.getElementById('dsPairName')?.value||'My device').trim();const u=bridgeUrl();if(!/^DS-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/i.test(id))return alert('Enter a valid DearSelf ID Key.');if(!/^\d{6}$/.test(code))return alert('Enter the 6-digit pairing code.');const room=prompt('Enter the pairing room code shown by the first device (the bridge room ID).');if(!room)return;const s=ensureSync();s.bridge=u;s.peerName=name;state.deviceSync.dearSelfId=id;save();connectBridge(u,ws=>ws.send(JSON.stringify({type:'join',room:String(room).trim(),code})));};
-  window.dsDeviceLink=function(){const s=ensureSync();modal(`<h2>🔗 DearSelf Devices</h2><p class="muted">Link devices without a DearSelf cloud. <b>Both devices must be on the same network.</b></p><div class="panel" style="margin-top:12px"><div class="small muted">Your DearSelf ID Key</div><div style="font-size:21px;font-weight:800;letter-spacing:2px;margin:7px 0">${esc2(state.deviceSync.dearSelfId)}</div><button class="btn" onclick="navigator.clipboard?.writeText('${esc2(state.deviceSync.dearSelfId)}');toast('ID Key copied ♡')">Copy ID Key</button></div><div class="actions" style="margin-top:12px"><button class="btn primary" onclick="dsStartPairing()">＋ Link another device</button><button class="btn" onclick="dsPairExisting()">Link existing device</button></div><div class="panel" style="margin-top:12px"><h3>Connection</h3><div class="small muted">${s.linked?'✓ Device connected':'○ No live device connection'}</div>${s.lastSync?`<div class="small muted">Last sync: ${esc2(s.lastSync)}</div>`:''}<button class="btn" style="margin-top:9px" onclick="dsManualSync()" ${s.linked?'':'disabled'}>Sync now</button></div><button class="btn" style="margin-top:12px" onclick="closeModal()">Done</button>`);};
-  window.dsManualSync=function(){sendSyncSnapshot();toast('Syncing with linked device…');};
-})();
-</script>
+
+
 </body>
 </html>
-<script id="dearself-v40-device-link">
-(function(){
-  function randHex(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase()}
-  function ensureDeviceIdentity(){
-    state.deviceSync=state.deviceSync||{};
-    if(!state.deviceSync.dearSelfId) state.deviceSync.dearSelfId='DS-'+randHex(2)+'-'+randHex(2)+'-'+randHex(2);
-    if(!state.deviceSync.deviceId) state.deviceSync.deviceId='DEV-'+randHex(3);
-    if(!Array.isArray(state.deviceSync.linkedDevices)) state.deviceSync.linkedDevices=[];
-    if(!Array.isArray(state.deviceSync.changeLog)) state.deviceSync.changeLog=[];
-    if(!state.deviceSync.lastSync) state.deviceSync.lastSync=null;
-    save();
-  }
-  ensureDeviceIdentity();
-  window.dsDeviceLink=function(){
-    ensureDeviceIdentity();
-    const ds=state.deviceSync;
-    const linked=ds.linkedDevices||[];
-    modal(`<div class="row between"><div><h2>🔗 DearSelf Devices</h2><p class="muted small">Link your DearSelf data between devices without putting it in a DearSelf cloud.</p></div><button class="btn" onclick="closeModal()">Done</button></div>
-      <div class="panel" style="margin-top:14px;background:var(--card)"><div class="small muted">Your DearSelf ID</div><div style="font-size:22px;font-weight:800;letter-spacing:2px;margin:6px 0 12px">${esc(ds.dearSelfId)}</div><div class="actions"><button class="btn" onclick="navigator.clipboard?.writeText('${esc(ds.dearSelfId)}');toast('ID Key copied ♡')">Copy ID Key</button><button class="btn primary" onclick="dsStartPairing()">＋ Link another device</button></div></div>
-      <div class="panel" style="margin-top:14px"><div class="row between"><h3>Linked devices</h3><span class="tag">${linked.length}</span></div>${linked.length?linked.map((d,i)=>`<div class="item"><div class="item-main"><div class="item-title">${esc(d.name||'DearSelf device')}</div><div class="item-meta">${esc(d.deviceId||'')} · Last synced ${esc(d.lastSync||'Never')}</div></div><button class="btn danger" onclick="dsUnlinkDevice(${i})">Unlink</button></div>`).join(''):'<div class="empty">No devices linked yet.</div>'}</div>
-      <div class="panel" style="margin-top:14px"><div class="row between"><div><h3>↕ Sync data</h3><p class="small muted">For the no-cloud version, create a local sync package on one device and import it on the other. DearSelf keeps the data on your devices.</p></div></div><div class="actions"><button class="btn primary" onclick="dsExportSync()">Export sync package</button><button class="btn" onclick="dsImportSync()">Import sync package</button></div><p class="small muted" style="margin-top:9px">Automatic same-Wi-Fi syncing needs a local bridge because normal web browsers cannot discover and connect to other devices on a network by themselves.</p></div>`);
-  };
-  window.dsStartPairing=function(){
-    ensureDeviceIdentity();
-    const code=String(Math.floor(100000+Math.random()*900000));
-    state.deviceSync.pendingPair={code,createdAt:Date.now()}; save();
-    modal(`<h2>Link another device</h2><p class="muted">On the other device, open <b>Settings → DearSelf Devices</b> and enter your ID Key and this pairing code.</p><div class="panel" style="text-align:center;margin:16px 0"><div class="small muted">Pairing code</div><div style="font-size:38px;font-weight:900;letter-spacing:8px;margin:10px 0">${code}</div><div class="small muted">Expires when you close this screen.</div></div><div class="actions"><button class="btn" onclick="dsDeviceLink()">Back</button><button class="btn primary" onclick="toast('Waiting for the other device ♡')">Waiting…</button></div>`);
-  };
-  window.dsPairExisting=function(){
-    ensureDeviceIdentity();
-    modal(`<h2>Link existing DearSelf</h2><div class="form-grid"><div class="field full"><label>DearSelf ID Key</label><input id="dsPairId" placeholder="DS-XXXX-XXXX-XXXX"></div><div class="field full"><label>Pairing code</label><input id="dsPairCode" inputmode="numeric" maxlength="6" placeholder="123456"></div><div class="field full"><label>This device name</label><input id="dsPairName" placeholder="My tablet"></div></div><div class="actions" style="margin-top:14px"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="dsFinishPairing()">Link device</button></div>`);
-  };
-  window.dsFinishPairing=function(){
-    const id=(document.getElementById('dsPairId')?.value||'').trim().toUpperCase(),code=(document.getElementById('dsPairCode')?.value||'').trim();
-    if(!/^DS-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/.test(id))return alert('Enter a valid DearSelf ID Key.');
-    if(!/^\d{6}$/.test(code))return alert('Enter the 6-digit pairing code.');
-    ensureDeviceIdentity();
-    state.deviceSync.dearSelfId=id; state.deviceSync.linkedDevices=state.deviceSync.linkedDevices||[];
-    state.deviceSync.linkedDevices.push({name:document.getElementById('dsPairName')?.value.trim()||'Linked device',deviceId:'DEV-'+randHex(3),lastSync:'Never'});
-    save(); closeModal(); settingsPage(); toast('Device linked locally ♡');
-  };
-  window.dsUnlinkDevice=function(i){ensureDeviceIdentity();state.deviceSync.linkedDevices.splice(i,1);save();dsDeviceLink();toast('Device unlinked')};
-  window.dsExportSync=function(){
-    ensureDeviceIdentity();
-    const payload={format:'DearSelf Sync Package',version:1,dearSelfId:state.deviceSync.dearSelfId,sourceDeviceId:state.deviceSync.deviceId,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(state))};
-    const blob=new Blob([JSON.stringify(payload)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DearSelf-Sync-Package.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Sync package exported ♡');
-  };
-  window.dsImportSync=function(){
-    const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.onchange=()=>{const f=input.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);if(p.format!=='DearSelf Sync Package')throw Error();if(p.dearSelfId!==state.deviceSync?.dearSelfId)return alert('This sync package belongs to a different DearSelf ID.');if(!p.data)throw Error();if(confirm('Import this sync package? Your current local data will be replaced by the package.')){const keep={deviceSync:state.deviceSync};state={...structuredClone(DEFAULT),...p.data,deviceSync:{...keep.deviceSync,lastSync:new Date().toLocaleString()}};save();toast('New information added ♡');show(currentPage)}}catch(e){alert('That is not a valid DearSelf sync package.')}};r.readAsText(f)};input.click();
-  };
-  const oldSettings=window.settingsPage;
-  window.settingsPage=function(){oldSettings();ensureDeviceIdentity();const content=document.getElementById('content');if(!content)return;const dataPanel=[...content.querySelectorAll('.panel')].find(p=>p.textContent.includes('Data'));if(!dataPanel)return;const panel=document.createElement('div');panel.className='panel';panel.style.marginTop='15px';panel.innerHTML=`<h2>🔗 DearSelf Devices</h2><p class="small muted">Link your DearSelf devices while keeping your data local. Your ID Key is ${esc(state.deviceSync.dearSelfId)}.</p><div class="actions"><button class="btn primary" onclick="dsDeviceLink()">Manage linked devices</button><button class="btn" onclick="dsPairExisting()">Link this device</button></div>`;dataPanel.parentNode.insertBefore(panel,dataPanel)};
-})();
-</script>
+
