@@ -1,11 +1,10 @@
 {
-  "version": "V43.3 Beta",
-  "versionNumber": 43.3,
+  "version": "V43.4 Beta",
+  "versionNumber": 43.4,
   "notes": [
-    "DearSelf V43.3 Beta.",
-    "Fixed the update checker version mismatch.",
-    "Includes the V43.2 Beta fixes and features.",
-    "Home Banner editing and removal remain available.",
-    "Preserves the existing theme system and user data."
+    "V43.4 Beta release.",
+    "Fixed the repeated update notification/version mismatch.",
+    "The app now uses the same 43.4 version number everywhere.",
+    "Preserves the existing DearSelf features and fixes."
   ]
 }
