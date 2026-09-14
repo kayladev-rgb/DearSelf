@@ -1,12 +1,12 @@
 {
-  "version": "V42.6 Beta",
-  "versionNumber": 42.6,
+  "version": "V43 Beta",
+  "versionNumber": 43,
   "notes": [
-    "Customizable Home banner with changeable picture and message.",
-    "Home picture widgets can use custom uploaded images.",
-    "Quick Links can be configured in Settings and guide users there when empty.",
-    "Home customization order continues to save and reflect on Home.",
-    "Import existing data remains available on the first-run screen.",
-    "No device sync or device-linking system."
+    "Full DearSelf visual makeover across the app",
+    "New soft glass cards, page headers, buttons and spacing",
+    "Improved Calendar, Tasks, Notes, Goals, Focus, Finances, Entertainment and School presentation",
+    "Home dashboard receives a polished responsive layout",
+    "Banner editing is now clearly available from Home and Settings",
+    "All existing DearSelf features and local data are preserved"
   ]
 }
