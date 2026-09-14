@@ -304,7 +304,7 @@ body{font-family:var(--dearself-selected-font)!important}
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
 <div id="toast" class="toast"></div><div id="dsHelpBot" class="ds-helpbot" aria-label="DearSelf Help Bot"><div class="ds-hb-head"><div class="ds-hb-avatar">✦</div><div style="min-width:0"><h3>DearSelf Help Bot</h3><div class="small muted">Your in-app helper · can do things for you</div></div><button class="ds-hb-conv-toggle" id="dsHelpConvToggle" type="button" title="Conversations" aria-label="Open conversations">☰</button><span class="ds-hb-badge">BETA</span><button class="ds-hb-close" onclick="toggleHelpBot(false)">×</button></div><div class="ds-hb-layout"><aside id="dsHelpHistory" class="ds-hb-history"><div class="ds-hb-history-top"><button class="ds-hb-new" id="dsHelpNewConversation" type="button">＋ New conversation</button><div id="dsHelpHistoryCount" class="ds-hb-history-count"></div></div><div id="dsHelpConvs" class="ds-hb-convs"></div></aside><div class="ds-hb-chatcol"><div id="dsHelpMsgs" class="ds-hb-msgs"></div><div class="ds-hb-input"><textarea id="dsHelpInput" placeholder="Tell me what you want to do…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHelpBot()}"></textarea><button class="ds-hb-send" onclick="sendHelpBot()">Send</button></div></div></div></div><button id="dsHelpFab" class="ds-helpbot-fab" onclick="toggleHelpBot()" title="DearSelf Help Bot">✦</button>
 <script>
-const DEARSELF_VERSION = "V41";
+const DEARSELF_VERSION = "V42";
 const KEY="personal_home_page_v11";
 const DEFAULT={
  homeName:"My DearSelf",username:"",profilePhoto:"",passwordHash:"",passwordPrompt:true,passwordMode:"lock",locked:false,tutorialSeen:false,accessCode:"",isOwner:false,
@@ -1619,6 +1619,36 @@ function exportData(){
     a.href=URL.createObjectURL(blob);a.download="home_page_backup.json";a.click();URL.revokeObjectURL(a.href);
   }
 }
+function importDataFromWelcome(){
+  if(window.AndroidBackup){
+    // The Android bridge will call onWelcomeImportSuccess(jsonStr).
+    try{ AndroidBackup.importBackup(); }
+    catch(e){ alert("Could not open the backup picker."); }
+    return;
+  }
+  const i=document.createElement("input");
+  i.type="file";
+  i.accept=".json,application/json";
+  i.onchange=()=>{
+    const f=i.files?.[0];
+    if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const imported=JSON.parse(r.result);
+        if(!imported || typeof imported!=="object") throw new Error();
+        state={...structuredClone(DEFAULT),...imported};
+        save();
+        toast("Backup imported successfully ♡");
+        auth();
+      }catch(e){
+        alert("That is not a valid DearSelf backup.");
+      }
+    };
+    r.readAsText(f);
+  };
+  i.click();
+}
 function importData(){
   if(window.AndroidBackup){
     AndroidBackup.importBackup();
@@ -1633,6 +1663,19 @@ function importData(){
     i.click();
   }
 }
+function onWelcomeImportSuccess(jsonStr){
+  try{
+    const imported=JSON.parse(jsonStr);
+    if(!imported || typeof imported!=="object") throw new Error();
+    state={...structuredClone(DEFAULT),...imported};
+    save();
+    auth();
+    toast("Backup imported successfully ♡");
+  }catch(e){
+    alert("Invalid backup file format.");
+  }
+}
+
 function onNativeImportSuccess(jsonStr){
   try{
     state={...structuredClone(DEFAULT),...JSON.parse(jsonStr)};
@@ -1675,10 +1718,14 @@ function authShell(title,sub,body){document.getElementById("root").innerHTML=`<d
 function showFirstSetup(){
   authShell("What would you like to be called?","This will be your username throughout the app.",`
     <div class="field"><label>USERNAME</label><input id="setupUser" autocomplete="nickname" autofocus placeholder="What should we call you?"></div>
-    <div class="auth-actions"><button type="button" id="setupUserBtn" class="btn primary">Continue →</button></div>`);
+    <div class="auth-actions"><button type="button" id="setupUserBtn" class="btn primary">Continue →</button></div>
+    <div style="margin:16px 0 4px;text-align:center;color:var(--muted)">Already have a DearSelf backup?</div>
+    <div class="auth-actions"><button type="button" id="welcomeImportBtn" class="btn">📥 Import existing data</button></div>
+    <p class="small muted" style="text-align:center;margin-top:8px">Restore a backup from another DearSelf installation without creating a new account first.</p>`);
   const go=()=>{const u=v('setupUser').trim();if(!u)return alert('Please enter a name.'); showPasswordSetup(u);};
   document.getElementById('setupUserBtn').addEventListener('click',go);
   document.getElementById('setupUser').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+  document.getElementById('welcomeImportBtn').addEventListener('click',importDataFromWelcome);
 }
 function showPasswordSetup(u){
   authShell("Let's protect your DearSelf","Create a password to keep your personal information private.",`
@@ -2122,7 +2169,7 @@ window.addEventListener('load',function(){
 
 <script>
 /* DearSelf V40 Beta GitHub Pages update checker */
-const DEARSELF_VERSION_NUMBER = 41;
+const DEARSELF_VERSION_NUMBER = 42;
 async function checkForUpdates(silent=false){
   try{
     const r = await fetch('./version.json?ts='+Date.now(), {cache:'no-store'});
@@ -2136,7 +2183,7 @@ async function checkForUpdates(silent=false){
         '<p class="muted">A newer version of DearSelf is available.</p>';
       modal('<button class="modal-close" onclick="closeModal()">×</button>'+
         '<h2>✨ DearSelf '+esc(v.version || ('V'+remote))+' is available!</h2>'+
-        '<p class="muted">You are currently using V41 Beta.</p>'+list+
+        '<p class="muted">You are currently using V42 Beta.</p>'+list+
         '<div class="actions" style="margin-top:16px">'+
         '<button class="btn primary" onclick="updateDearSelf()">Update DearSelf</button>'+
         '<button class="btn" onclick="closeModal()">Later</button></div>');

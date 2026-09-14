@@ -1,10 +1,11 @@
 {
-  "version": "V41 Beta",
-  "versionNumber": 41,
+  "version": "V42 Beta",
+  "versionNumber": 42,
   "notes": [
-    "V41 Beta test release.",
-    "Improved Check for Updates with cache-busting and no-cache requests.",
-    "Improved update activation for installed DearSelf PWAs.",
+    "V42 Beta test release.",
+    "Added Import existing data to the first-time DearSelf welcome screen.",
+    "You can restore a DearSelf backup before creating a new username.",
+    "Kept the V41 update-check improvements.",
     "No device sync or device-linking system."
   ]
 }
