@@ -1,12 +1,9 @@
 {
-  "version": "V43 Beta",
-  "versionNumber": 43,
+  "version": "V43.1 Beta",
+  "versionNumber": 43.1,
   "notes": [
-    "Full DearSelf visual makeover across the app",
-    "New soft glass cards, page headers, buttons and spacing",
-    "Improved Calendar, Tasks, Notes, Goals, Focus, Finances, Entertainment and School presentation",
-    "Home dashboard receives a polished responsive layout",
-    "Banner editing is now clearly available from Home and Settings",
-    "All existing DearSelf features and local data are preserved"
+    "Theme-safe full makeover",
+    "Preserves all existing DearSelf themes",
+    "Stability and UI fixes from V43 Beta"
   ]
 }

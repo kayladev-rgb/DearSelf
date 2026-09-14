@@ -1,4 +1,4 @@
-const CACHE = 'dearself-v43-beta';
+const CACHE = 'dearself-v43-1-beta';
 const CORE = ['./', './index.html', './version.json', './manifest.json'];
 
 self.addEventListener('install', event => {
