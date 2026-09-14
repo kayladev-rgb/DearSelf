@@ -1,11 +1,11 @@
 {
-  "version": "V42.2 Beta",
-  "versionNumber": 42.2,
+  "version": "V42.4 Beta",
+  "versionNumber": 42.4,
   "notes": [
-    "Moved Import Existing Data off the first-time welcome screen.",
-    "Moved Share My Data into Settings.",
-    "Added a warning to be careful when sharing DearSelf data.",
-    "Kept the V42.1 sharing behavior.",
+    "Fully customizable Home page.",
+    "Redesigned Customize Home with Available Widgets and Home Preview.",
+    "Add, remove, toggle, and drag widgets to reorder them.",
+    "Touch-friendly reordering for tablets and touch-enabled laptops.",
     "No device sync or device-linking system."
   ]
 }

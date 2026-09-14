@@ -304,7 +304,7 @@ body{font-family:var(--dearself-selected-font)!important}
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
 <div id="toast" class="toast"></div><div id="dsHelpBot" class="ds-helpbot" aria-label="DearSelf Help Bot"><div class="ds-hb-head"><div class="ds-hb-avatar">✦</div><div style="min-width:0"><h3>DearSelf Help Bot</h3><div class="small muted">Your in-app helper · can do things for you</div></div><button class="ds-hb-conv-toggle" id="dsHelpConvToggle" type="button" title="Conversations" aria-label="Open conversations">☰</button><span class="ds-hb-badge">BETA</span><button class="ds-hb-close" onclick="toggleHelpBot(false)">×</button></div><div class="ds-hb-layout"><aside id="dsHelpHistory" class="ds-hb-history"><div class="ds-hb-history-top"><button class="ds-hb-new" id="dsHelpNewConversation" type="button">＋ New conversation</button><div id="dsHelpHistoryCount" class="ds-hb-history-count"></div></div><div id="dsHelpConvs" class="ds-hb-convs"></div></aside><div class="ds-hb-chatcol"><div id="dsHelpMsgs" class="ds-hb-msgs"></div><div class="ds-hb-input"><textarea id="dsHelpInput" placeholder="Tell me what you want to do…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHelpBot()}"></textarea><button class="ds-hb-send" onclick="sendHelpBot()">Send</button></div></div></div></div><button id="dsHelpFab" class="ds-helpbot-fab" onclick="toggleHelpBot()" title="DearSelf Help Bot">✦</button>
 <script>
-const DEARSELF_VERSION = "V42.2 Beta";
+const DEARSELF_VERSION = "V42.4 Beta";
 const KEY="personal_home_page_v11";
 const DEFAULT={
  homeName:"My DearSelf",username:"",profilePhoto:"",passwordHash:"",passwordPrompt:true,passwordMode:"lock",locked:false,tutorialSeen:false,accessCode:"",isOwner:false,
@@ -1599,14 +1599,6 @@ function settingsPage(){
       <p class="small muted" style="margin-top:10px">Reminders are kept locally. Device/browser notifications depend on notification permission and whether DearSelf is open or allowed to run in the background.</p>
     </div><div class="panel" style="margin-top:15px">
       <h2>Data & Account</h2>
-<div class="card" style="margin-top:12px">
-  <h3 style="margin-top:0">Your Data</h3>
-  <p class="small muted">Import or share your DearSelf backup. Be careful sharing your data; this was originally meant to share between devices.</p>
-  <div class="actions">
-    <button class="btn" type="button" onclick="importData()">📥 Import Data</button>
-    <button class="btn" type="button" onclick="shareDearSelfData()">📤 Share My Data</button>
-  </div>
-</div>
 
       <div class="actions">
         <button class="btn" onclick="exportData()">Export backup</button>
@@ -1628,66 +1620,7 @@ function exportData(){
     a.href=URL.createObjectURL(blob);a.download="home_page_backup.json";a.click();URL.revokeObjectURL(a.href);
   }
 }
-async function shareDataFromWelcome(){
-  try{
-    const payload=JSON.stringify(state,null,2);
-    const file=new File([payload],"my-dearself-data.json",{type:"application/json"});
-    const shareData={
-      title:"My DearSelf Data",
-      text:"Here is my DearSelf data backup.",
-      files:[file]
-    };
 
-    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-      await navigator.share(shareData);
-      return;
-    }
-
-    // Desktop/browser fallback: download the JSON and open Gmail compose.
-    const blob=new Blob([payload],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url;
-    a.download="my-dearself-data.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-
-    const subject=encodeURIComponent("My DearSelf Data");
-    const body=encodeURIComponent("Here is my DearSelf data backup. I have attached my-dearself-data.json.\n\nPlease handle this file carefully.");
-    window.location.href="https://mail.google.com/mail/?view=cm&fs=1&su="+subject+"&body="+body;
-    toast("Your backup was downloaded. Gmail compose is opening ♡");
-  }catch(e){
-    if(e && e.name==="AbortError") return;
-    alert("Could not share your DearSelf data. Please try again.");
-    console.warn("DearSelf share failed:",e);
-  }
-}
-
-
-async function shareDearSelfData(){
-  try{
-    const payload=JSON.stringify(state,null,2);
-    const file=new File([payload],"my-dearself-data.json",{type:"application/json"});
-    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-      await navigator.share({title:"My DearSelf Data",text:"Here is my DearSelf data backup.",files:[file]});
-      return;
-    }
-    const blob=new Blob([payload],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url; a.download="my-dearself-data.json";
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    const subject=encodeURIComponent("My DearSelf Data");
-    const body=encodeURIComponent("Here is my DearSelf data backup. I have attached my-dearself-data.json.\n\nPlease handle this file carefully.");
-    window.open("https://mail.google.com/mail/?view=cm&fs=1&su="+subject+"&body="+body,"_blank");
-  }catch(e){
-    if(e && e.name==="AbortError") return;
-    alert("Could not share your DearSelf data.");
-  }
-}
 function importDataFromWelcome(){
   if(window.AndroidBackup){
     // The Android bridge will call onWelcomeImportSuccess(jsonStr).
@@ -1787,11 +1720,7 @@ function authShell(title,sub,body){document.getElementById("root").innerHTML=`<d
 function showFirstSetup(){
   authShell("What would you like to be called?","This will be your username throughout the app.",`
     <div class="field"><label>USERNAME</label><input id="setupUser" autocomplete="nickname" autofocus placeholder="What should we call you?"></div>
-    <div class="auth-actions"><button type="button" id="setupUserBtn" class="btn primary">Continue →</button></div>
-    <div class="small" style="text-align:center;margin-top:10px;padding:10px;border-radius:12px;background:rgba(255,182,193,.14);border:1px solid rgba(255,182,193,.35)">
-      <strong>⚠️ Be careful sharing your data.</strong><br>
-      This was originally meant to share data between devices, so your backup may contain personal information from DearSelf.
-    </div>`);
+    <div class="auth-actions"><button type="button" id="setupUserBtn" class="btn primary">Continue →</button></div>`);
   const go=()=>{const u=v('setupUser').trim();if(!u)return alert('Please enter a name.'); showPasswordSetup(u);};
   document.getElementById('setupUserBtn').addEventListener('click',go);
   document.getElementById('setupUser').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
@@ -1979,12 +1908,12 @@ window.addEventListener("DOMContentLoaded",()=>{ try{ auth(); }catch(e){ console
       <div style="margin-top:14px"><label class="small muted">Theme</label>${themeGroups()}</div></div>
       <div class="panel" style="margin-top:15px"><div class="row between"><div><h2>🧭 Interactive Tutorial</h2><p class="small muted">Take the guided DearSelf tour again whenever you want.</p></div><button class="btn primary" onclick="showOnboarding(true)">Start Tutorial</button><button class="btn" onclick="toggleHelpBot(true)">✦ Help Bot</button></div></div>
       <div class="panel" style="margin-top:15px"><div class="row between"><div><h2>🏠 Home dashboard</h2><p class="small muted">Choose which widgets appear on your Home page.</p></div><button class="btn" onclick="resetDashboardWidgets()">Reset</button></div><div class="ds-widget-settings">${[['schedule','📅 Today’s Schedule'],['work','📝 Upcoming Work'],['tasks','✓ Today’s Focus'],['exams','🎓 Next Exams'],['courses','📚 Course Progress'],['goals','🎯 Goals'],['life','♡ Your Life'],['quote','✦ DearSelf says…']].map(([k,l])=>`<label class="switch-row"><span>${l}</span><input type="checkbox" ${widgets[k]!==false?'checked':''} onchange="toggleDashboardWidget('${k}',this.checked)"></label>`).join('')}</div></div>
-      <div class="panel" style="margin-top:15px"><h2>💾 Data</h2><p class="small muted">${(bytes/1024).toFixed(1)} KB currently stored locally.</p><div class="actions"><button class="btn primary" onclick="exportData()">Export backup</button><button class="btn" onclick="importData()">Import backup</button><button class="btn danger" onclick="resetAll()">Reset everything</button></div></div>`;
+      <div class="panel" style="margin-top:15px"><h2>💾 Data</h2><p class="small muted">${(bytes/1024).toFixed(1)} KB currently stored locally.</p><div class="actions"><button class="btn primary" onclick="exportData()">Export backup</button><button class="btn" onclick="importData()">Import backup</button><button class="btn danger" onclick="resetAll()">Reset everything</button></div><div class="small" style="text-align:center;margin-top:12px;padding:10px;border-radius:12px;background:rgba(255,182,193,.14);border:1px solid rgba(255,182,193,.35)"><strong>⚠️ Be careful sharing your data.</strong><br>This was originally meant to share data between devices, so your backup may contain personal information from DearSelf.</div></div>`;
   }
   function toggleDashboardWidget(k,vv){state.dashboardWidgets=state.dashboardWidgets||{};state.dashboardWidgets[k]=vv;save();toast('Home updated ♡')}
   function resetDashboardWidgets(){state.dashboardWidgets={schedule:true,work:true,tasks:true,exams:true,courses:true,goals:true,life:true,quote:true};save();settingsPage()}
   // Wrap home to honor widget visibility while keeping one source of data.
-  home=function(){ dsHome(); const w=state.dashboardWidgets||{}; const map={schedule:'.ds-widget:nth-of-type(1)',work:'.ds-widget:nth-of-type(2)'}; const content=document.getElementById('content'); if(!content)return; ['schedule','work','tasks','exams','courses','goals','life','quote'].forEach(k=>{if(w[k]===false){const els=content.querySelectorAll('.ds-widget'); const groups={schedule:0,work:1,tasks:2,exams:3,courses:4,goals:5,life:6,quote:7}; const n=groups[k]; if(els[n])els[n].style.display='none';}}); };
+  home=function(){ dsHome(); const w=state.dashboardWidgets||{}; const content=document.getElementById('content'); if(!content)return; const actions=content.querySelector('.ds-welcome-actions'); if(actions && !actions.querySelector('.dearself-discord-btn')){ const b=document.createElement('button'); b.type='button'; b.className='btn dearself-discord-btn'; b.textContent='Discord'; b.onclick=()=>modal('<button class="modal-close" onclick="closeModal()">×</button><h2>Discord</h2><p class="muted">Soon come ♡</p><div class="actions"><button class="btn primary" onclick="closeModal()">Okay</button></div>'); actions.appendChild(b); } ['schedule','work','tasks','exams','courses','goals','life','quote'].forEach(k=>{if(w[k]===false){const els=content.querySelectorAll('.ds-widget'); const groups={schedule:0,work:1,tasks:2,exams:3,courses:4,goals:5,life:6,quote:7}; const n=groups[k]; if(els[n])els[n].style.display='none';}}); };
   // Preserve the richer original app but upgrade the main navigation pages.
   window.home=home; window.tasksPage=dsTasksPage; window.addTask=addTask; window.editTask=editTask; window.schoolPage=schoolPage; window.goalsPage=goalsPage; window.settingsPage=settingsPage; window.toggleDashboardWidget=toggleDashboardWidget; window.resetDashboardWidgets=resetDashboardWidgets;
 })();
@@ -2210,7 +2139,171 @@ function addUniversalFile(){const inp=document.createElement('input');inp.type='
 function deleteUniversalFile(i){if(confirm('Delete this file?')){state.universalFiles.splice(i,1);save();filesPage()}}
 function smartSemesterSetup(){const names=prompt('Paste your courses, separated by commas:');if(!names)return;const list=names.split(',').map(x=>x.trim()).filter(Boolean);let added=0;list.forEach(n=>{if(!(state.courses||[]).some(c=>norm(c.name||'')===norm(n))){state.courses.push({name:n,code:'',topics:[],notes:[],cover:''});added++;}});save();show('School');toast(`${added} course${added===1?'':'s'} added ✦`)}
 function globalSmartInsights(){return {openTasks:(state.tasks||[]).filter(x=>!x.done).length,courses:(state.courses||[]).length,events:(state.events||[]).length}}
-function setupHomeWidgets(){const w=state.homeWidgets||{};const order=state.homeWidgetOrder||['today','tasks','school','finance','entertainment','goals'];modal(`<div><h2>Customize Home</h2><p class="muted">Choose what appears on your dashboard. You can also drag the cards on Home to rearrange them.</p>${order.map(k=>{const v={today:'Today / Schedule',tasks:'Tasks',school:'School',finance:'Finances',entertainment:'Entertainment',goals:'Goals & Habits'}[k];return `<div class="ds-widget-toggle"><span>${v}</span><input type="checkbox" ${w[k]!==false?'checked':''} onchange="state.homeWidgets['${k}']=this.checked;save()"></div>`}).join('')}<div class="actions" style="margin-top:14px"><button class="btn primary" onclick="closeModal();home()">Done</button><button class="btn" onclick="state.homeWidgetOrder=['today','tasks','school','finance','entertainment','goals'];save();closeModal();home();toast('Home order reset')">Reset order</button></div></div>`)}
+function setupHomeWidgets(){
+  const defs={
+    today:{title:'Today / Schedule',desc:'See your day at a glance.',icon:'▣'},
+    tasks:{title:'Tasks',desc:'Your to-dos for the day.',icon:'✓'},
+    school:{title:'School',desc:'Upcoming classes, assignments, etc.',icon:'▣'},
+    finance:{title:'Finances',desc:'Your financial overview.',icon:'$'},
+    entertainment:{title:'Entertainment',desc:'Books, shows, movies and more.',icon:'♫'},
+    goals:{title:'Goals & Habits',desc:'Track your goals and habits.',icon:'◎'},
+    notes:{title:'Notes',desc:'Quick notes and ideas.',icon:'▤'},
+    focus:{title:'Focus',desc:'Start a focus timer.',icon:'◷'},
+    weather:{title:'Weather',desc:'Current weather and forecast.',icon:'☁'},
+    quote:{title:'Quote of the Day',desc:'A little motivation.',icon:'❝'},
+    gallery:{title:'Gallery',desc:'Change the look with your own images.',icon:'▧'}
+  };
+  const available=Object.keys(defs);
+  if(!Array.isArray(state.homeWidgetOrder)) state.homeWidgetOrder=['today','tasks','school','finance','entertainment','goals'];
+  if(!state.homeWidgets||typeof state.homeWidgets!=='object') state.homeWidgets={};
+
+  const escHtml=s=>esc(String(s));
+  const render=()=>{
+    const order=state.homeWidgetOrder.filter(k=>defs[k]);
+    const inOrder=new Set(order);
+    const avail=available.filter(k=>!inOrder.has(k));
+    const availableHtml=avail.map(k=>{
+      const d=defs[k];
+      return `<div class="ds-cw-available" draggable="true" data-widget="${k}">
+        <div class="ds-cw-icon">${d.icon}</div>
+        <div class="ds-cw-info"><b>${escHtml(d.title)}</b><span>${escHtml(d.desc)}</span></div>
+        <button class="btn ds-cw-add" type="button" data-add="${k}">＋ Add</button>
+      </div>`;
+    }).join('') || `<div class="ds-cw-empty">Everything is already on your Home page.</div>`;
+
+    const homeHtml=order.map((k,i)=>{
+      const d=defs[k], on=state.homeWidgets[k]!==false;
+      return `<div class="ds-cw-home ${on?'':'is-off'}" draggable="true" data-widget="${k}">
+        <div class="ds-cw-grip" title="Drag to reorder">⠿</div>
+        <div class="ds-cw-icon">${d.icon}</div>
+        <div class="ds-cw-info"><b>${escHtml(d.title)}</b><span>${escHtml(d.desc)}</span></div>
+        <label class="ds-cw-switch" title="${on?'Visible on Home':'Hidden from Home'}">
+          <input type="checkbox" ${on?'checked':''} data-toggle="${k}">
+          <span></span>
+        </label>
+        <button class="ds-cw-delete" type="button" data-remove="${k}" title="Remove from Home">♙</button>
+      </div>`;
+    }).join('') || `<div class="ds-cw-dropempty">Drag a widget here or use <b>＋ Add</b> on the left.</div>`;
+
+    const style=`<style>
+      .ds-cw-modal{max-width:1080px!important;width:min(94vw,1080px)!important}
+      .ds-cw-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+      .ds-cw-head-icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe6f0,#e8f5ff);display:grid;place-items:center;font-size:26px}
+      .ds-cw-head h2{margin:0;font-size:25px}.ds-cw-head p{margin:3px 0 0;color:var(--muted)}
+      .ds-cw-columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+      .ds-cw-panel{border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,.38);min-height:430px}
+      .ds-cw-panel h3{margin:4px 8px 2px;font-size:18px}.ds-cw-panel>p{margin:0 8px 12px;color:var(--muted);font-size:13px}
+      .ds-cw-list{display:flex;flex-direction:column;gap:7px;max-height:510px;overflow:auto;padding:2px}
+      .ds-cw-available,.ds-cw-home{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--panel,#fff);border-radius:12px;padding:9px 10px;min-height:54px;cursor:grab;transition:.15s}
+      .ds-cw-available:hover,.ds-cw-home:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(15,23,42,.07)}
+      .ds-cw-home.is-off{opacity:.52}
+      .ds-cw-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#ffe5ef,#e7f5ff);display:grid;place-items:center;font-weight:800;flex:0 0 36px}
+      .ds-cw-info{flex:1;min-width:0}.ds-cw-info b{display:block}.ds-cw-info span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .ds-cw-grip{font-size:20px;color:var(--muted);cursor:grab;width:18px;text-align:center}
+      .ds-cw-add{padding:7px 10px;font-size:13px}.ds-cw-delete{border:0;background:#fff0f4;color:#b4235a;border-radius:9px;width:34px;height:34px;cursor:pointer;font-size:18px}
+      .ds-cw-switch{position:relative;width:48px;height:28px;flex:0 0 48px}.ds-cw-switch input{display:none}.ds-cw-switch span{position:absolute;inset:0;border-radius:99px;background:#cbd5e1;cursor:pointer}.ds-cw-switch span:before{content:'';position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.15s;box-shadow:0 1px 3px #9995}.ds-cw-switch input:checked+span{background:#168bd0}.ds-cw-switch input:checked+span:before{transform:translateX(20px)}
+      .ds-cw-empty,.ds-cw-dropempty{padding:25px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:12px}
+      .ds-cw-home.dragging,.ds-cw-available.dragging{opacity:.35}.ds-cw-home.dragover{outline:2px solid var(--accent);outline-offset:1px}
+      .ds-cw-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+      @media(max-width:760px){.ds-cw-columns{grid-template-columns:1fr}.ds-cw-panel{min-height:260px}.ds-cw-list{max-height:340px}}
+    </style>`;
+
+    modal(`${style}<div class="ds-cw-modal">
+      <div class="ds-cw-head">
+        <div class="ds-cw-head-icon">▦</div>
+        <div><h2>Customize Home</h2><p>Choose what appears on your home page, move them around, and make it truly yours.</p></div>
+      </div>
+      <div class="ds-cw-columns">
+        <section class="ds-cw-panel">
+          <h3>Available Widgets</h3>
+          <p>Drag items to add them to your home page, or click <b>＋ Add</b>.</p>
+          <div class="ds-cw-list" id="dsCwAvailable">${availableHtml}</div>
+        </section>
+        <section class="ds-cw-panel">
+          <div class="row between"><div><h3>Home Preview</h3><p>Drag to reorder. Toggle items on/off. Changes save automatically.</p></div>
+          <button class="btn" type="button" id="dsCwReset">↻ Reset to Default</button></div>
+          <div class="ds-cw-list" id="dsCwHome">${homeHtml}</div>
+          <div class="ds-cw-footer"><button class="btn primary" type="button" id="dsCwDone">✓ Done</button></div>
+        </section>
+      </div>
+    </div>`);
+
+    const availEl=document.getElementById('dsCwAvailable'), homeEl=document.getElementById('dsCwHome');
+    if(!availEl||!homeEl)return;
+
+    const saveAndRender=()=>{save(); render();};
+
+    availEl.querySelectorAll('[data-add]').forEach(btn=>btn.onclick=()=>{
+      const k=btn.dataset.add;
+      if(!state.homeWidgetOrder.includes(k)) state.homeWidgetOrder.push(k);
+      state.homeWidgets[k]=true; saveAndRender();
+    });
+
+    homeEl.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=()=>{
+      const k=btn.dataset.remove;
+      state.homeWidgetOrder=state.homeWidgetOrder.filter(x=>x!==k);
+      saveAndRender();
+    });
+
+    homeEl.querySelectorAll('[data-toggle]').forEach(input=>input.onchange=()=>{
+      state.homeWidgets[input.dataset.toggle]=input.checked;
+      saveAndRender();
+    });
+
+    document.getElementById('dsCwReset').onclick=()=>{
+      state.homeWidgetOrder=['today','tasks','school','finance','entertainment','goals'];
+      state.homeWidgets={};
+      saveAndRender();
+    };
+    document.getElementById('dsCwDone').onclick=()=>{closeModal();home();};
+
+    let dragged=null;
+    const bindDrag=()=>{
+      homeEl.querySelectorAll('.ds-cw-home').forEach(el=>{
+        el.addEventListener('dragstart',()=>{dragged=el;el.classList.add('dragging')});
+        el.addEventListener('dragend',()=>{el.classList.remove('dragging');dragged=null;homeEl.querySelectorAll('.dragover').forEach(x=>x.classList.remove('dragover'));});
+        el.addEventListener('dragover',e=>{
+          e.preventDefault(); if(!dragged||dragged===el)return;
+          el.classList.add('dragover');
+          const r=el.getBoundingClientRect();
+          homeEl.insertBefore(dragged,(e.clientY-r.top)>r.height/2?el.nextSibling:el);
+        });
+        el.addEventListener('dragleave',()=>el.classList.remove('dragover'));
+        el.addEventListener('drop',e=>{
+          e.preventDefault(); el.classList.remove('dragover');
+          state.homeWidgetOrder=[...homeEl.querySelectorAll('.ds-cw-home')].map(x=>x.dataset.widget);
+          save(); toast('Home layout saved ♡');
+        });
+      });
+    };
+    bindDrag();
+
+    // Pointer/touch reordering for tablets and touch-enabled laptops.
+    let touchEl=null;
+    homeEl.querySelectorAll('.ds-cw-home').forEach(el=>{
+      el.addEventListener('pointerdown',e=>{
+        if(e.target.closest('button,input,label'))return;
+        touchEl=el; el.setPointerCapture?.(e.pointerId);
+      });
+      el.addEventListener('pointermove',e=>{
+        if(!touchEl||touchEl!==el)return;
+        const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('.ds-cw-home');
+        if(!under||under===el)return;
+        const r=under.getBoundingClientRect();
+        homeEl.insertBefore(el,(e.clientY-r.top)>r.height/2?under.nextSibling:under);
+      });
+      el.addEventListener('pointerup',()=>{
+        if(touchEl===el){
+          state.homeWidgetOrder=[...homeEl.querySelectorAll('.ds-cw-home')].map(x=>x.dataset.widget);
+          save(); toast('Home layout saved ♡'); touchEl=null;
+        }
+      });
+      el.addEventListener('pointercancel',()=>{touchEl=null});
+    });
+  };
+  render();
+}
+
 function privacyCenter(){modal(`<div><h2>Privacy Center</h2><p class="muted">DearSelf is designed around local-first data.</p><div class="ds-notice"><b>Local data</b><br>Your information is stored in the app unless you choose to export or share it.</div><div class="ds-notice"><b>Backups</b><br>Use Settings → Save Data to create a backup you control.</div><div class="actions"><button class="btn danger" onclick="if(confirm('Clear all DearSelf data? This cannot be undone.')){clearAppCache();location.reload()}">Clear all data</button><button class="btn" onclick="closeModal()">Close</button></div></div>`)}
 </script>
 <script>
@@ -2238,7 +2331,7 @@ window.addEventListener('load',function(){
 
 <script>
 /* DearSelf V40 Beta GitHub Pages update checker */
-const DEARSELF_VERSION_NUMBER = 42.2;
+const DEARSELF_VERSION_NUMBER = 42.4;
 async function checkForUpdates(silent=false){
   try{
     const r = await fetch('./version.json?ts='+Date.now(), {cache:'no-store'});
@@ -2252,7 +2345,7 @@ async function checkForUpdates(silent=false){
         '<p class="muted">A newer version of DearSelf is available.</p>';
       modal('<button class="modal-close" onclick="closeModal()">×</button>'+
         '<h2>✨ DearSelf '+esc(v.version || ('V'+remote))+' is available!</h2>'+
-        '<p class="muted">You are currently using V42.2 Beta.</p>'+list+
+        '<p class="muted">You are currently using V42.4 Beta.</p>'+list+
         '<div class="actions" style="margin-top:16px">'+
         '<button class="btn primary" onclick="updateDearSelf()">Update DearSelf</button>'+
         '<button class="btn" onclick="closeModal()">Later</button></div>');
