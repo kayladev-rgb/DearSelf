@@ -305,8 +305,9 @@ body{font-family:var(--dearself-selected-font)!important}
 <div id="modalWrap" class="modal-wrap"><div id="modal" class="modal"></div></div>
 <div id="toast" class="toast"></div><div id="dsHelpBot" class="ds-helpbot" aria-label="DearSelf Help Bot"><div class="ds-hb-head"><div class="ds-hb-avatar">✦</div><div style="min-width:0"><h3>DearSelf Help Bot</h3><div class="small muted">Your in-app helper · can do things for you</div></div><button class="ds-hb-conv-toggle" id="dsHelpConvToggle" type="button" title="Conversations" aria-label="Open conversations">☰</button><span class="ds-hb-badge">BETA</span><button class="ds-hb-close" onclick="toggleHelpBot(false)">×</button></div><div class="ds-hb-layout"><aside id="dsHelpHistory" class="ds-hb-history"><div class="ds-hb-history-top"><button class="ds-hb-new" id="dsHelpNewConversation" type="button">＋ New conversation</button><div id="dsHelpHistoryCount" class="ds-hb-history-count"></div></div><div id="dsHelpConvs" class="ds-hb-convs"></div></aside><div class="ds-hb-chatcol"><div id="dsHelpMsgs" class="ds-hb-msgs"></div><div class="ds-hb-input"><textarea id="dsHelpInput" placeholder="Tell me what you want to do…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHelpBot()}"></textarea><button class="ds-hb-send" onclick="sendHelpBot()">Send</button></div></div></div></div><button id="dsHelpFab" class="ds-helpbot-fab" onclick="toggleHelpBot()" title="DearSelf Help Bot">✦</button>
 <script>
-const DEARSELF_VERSION = "V43.5 Beta";
-const DEARSELF_VERSION_NUMBER = 43.5;
+
+const DEARSELF_VERSION = "V44.1 Beta";
+const DEARSELF_VERSION_NUMBER = 44.1;
 window.DEARSELF_VERSION = DEARSELF_VERSION;
 window.DEARSELF_VERSION_NUMBER = DEARSELF_VERSION_NUMBER;
 
@@ -1168,7 +1169,7 @@ function saveNotebookFile(ci,ti,ni){
  const r=new FileReader();r.onload=()=>{let nb=state.courses[ci].topics[ti].notebooks[ni];nb.files=nb.files||[];nb.files.push({name:v('f_nbfilename')||file.name,type:file.type||'application/octet-stream',data:r.result,date:today(),size:file.size});nb.updated=today();save();closeModal();openNotebook(ci,ti,ni);toast('File added to notebook ♡')};r.readAsDataURL(file);
 }
 function notebookFileDataUrl(f){return f?.data||''}
-async function openNotebookFile(ci,ti,ni,fi){
+async function legacyOpenNotebookFile(ci,ti,ni,fi){
   const f=state.courses[ci].topics[ti].notebooks[ni]?.files?.[fi];if(!f)return;
   try{
     if(window.DearSelfDesktop?.openFile){
@@ -2454,7 +2455,7 @@ window.addEventListener('load',function(){
 </script>
 
 <script>
-/* DearSelf V43.5 Beta GitHub Pages update checker */
+/* DearSelf V44.1 Beta GitHub Pages update checker */
 
 async function checkForUpdates(silent=false){
   try{
@@ -2751,7 +2752,7 @@ window.addEventListener("DOMContentLoaded",function(){
 
 
 
-<!-- DearSelf V43.5 Beta — theme-safe full visual makeover -->
+<!-- DearSelf V44.1 Beta — theme-safe full visual makeover -->
 <style id="dearself-v43-full-makeover">
 html,body{background:var(--bg)!important;color:var(--text)!important}
 body{background-image:var(--bg-image)!important;background-attachment:fixed}
@@ -2788,6 +2789,156 @@ body[data-page="School"] .school-hub-grid .panel{min-height:170px;background:lin
 })();
 </script>
 
+<style id="dearself-v43-6-additions">
+.ds-additions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.ds-backup-status{padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+.ds-backup-status strong{display:block;margin-bottom:3px}
+.ds-filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.ds-filter-row select{min-width:170px}
+.ds-filter-chip{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 12px;cursor:pointer}
+.ds-filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ds-auto-calendar{border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));background:color-mix(in srgb,var(--accent) 7%,var(--card));}
+@media(max-width:700px){.ds-additions-grid{grid-template-columns:1fr}.ds-filter-row select{width:100%}}
+</style>
+<script id="dearself-v43-6-additions">
+/* DearSelf V44.0 additions. Built on the uploaded DearSelf project. */
+(function(){
+  const BACKUP_DB='dearself-backup-settings-v1';
+  const BACKUP_STORE='settings';
+  const BACKUP_KEY='directory';
+  const DEFAULT_AUTO={enabled:false,intervalMinutes:60,deleteAfter7Days:false,lastBackupAt:0,directoryName:''};
+  state.autoBackup={...DEFAULT_AUTO,...(state.autoBackup||{})};
+  state.autoBackup.intervalMinutes=Number(state.autoBackup.intervalMinutes)||60;
+
+  function backupSettings(){return state.autoBackup||DEFAULT_AUTO}
+  function openBackupDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(BACKUP_DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(BACKUP_STORE))r.result.createObjectStore(BACKUP_STORE)};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+  async function putBackupDirectory(handle){try{const db=await openBackupDB();await new Promise((res,rej)=>{const tx=db.transaction(BACKUP_STORE,'readwrite');tx.objectStore(BACKUP_STORE).put(handle,BACKUP_KEY);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close();return true}catch(e){console.warn('DearSelf backup directory save failed',e);return false}}
+  async function getBackupDirectory(){try{const db=await openBackupDB();const h=await new Promise((res,rej)=>{const tx=db.transaction(BACKUP_STORE,'readonly');const r=tx.objectStore(BACKUP_STORE).get(BACKUP_KEY);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});db.close();return h}catch(e){return null}}
+  async function clearBackupDirectory(){try{const db=await openBackupDB();await new Promise((res,rej)=>{const tx=db.transaction(BACKUP_STORE,'readwrite');tx.objectStore(BACKUP_STORE).delete(BACKUP_KEY);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch(e){}}
+
+  function backupFileName(date=new Date()){
+    const pad=n=>String(n).padStart(2,'0');
+    return `DearSelf backup - ${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}.json`;
+  }
+  function backupPayload(){return JSON.stringify({app:'DearSelf',version:window.DEARSELF_VERSION||'V44.1 Beta',createdAt:new Date().toISOString(),data:state},null,2)}
+  async function ensureDirPermission(handle){if(!handle)return false;try{let p=await handle.queryPermission({mode:'readwrite'});if(p==='granted')return true;if(p==='prompt')p=await handle.requestPermission({mode:'readwrite'});return p==='granted'}catch(e){return false}}
+  async function cleanupOldBackups(handle){if(!backupSettings().deleteAfter7Days)return;const cutoff=Date.now()-7*24*60*60*1000;try{for await(const entry of handle.values()){if(entry.kind!=='file'||!/^DearSelf backup - .*\.json$/i.test(entry.name))continue;let old=false;try{const f=await entry.getFile();old=f.lastModified<cutoff}catch(e){};if(old)try{await handle.removeEntry(entry.name)}catch(e){}}}catch(e){console.warn('DearSelf backup cleanup failed',e)}}
+  async function writeAutomaticBackup(reason='scheduled'){
+    const cfg=backupSettings();if(!cfg.enabled)return false;
+    const handle=await getBackupDirectory();
+    if(!handle){return false}
+    if(!(await ensureDirPermission(handle))){if(typeof toast==='function')toast('Auto backup needs folder permission. Open Backup settings to reconnect it.');return false}
+    try{
+      const fileHandle=await handle.getFileHandle(backupFileName(),{create:true});
+      const writable=await fileHandle.createWritable();await writable.write(new Blob([backupPayload()],{type:'application/json'}));await writable.close();
+      cfg.lastBackupAt=Date.now();cfg.directoryName=handle.name||cfg.directoryName||'';save();await cleanupOldBackups(handle);
+      if(reason==='manual'&&typeof toast==='function')toast('Backup saved ♡');
+      return true;
+    }catch(e){console.warn('DearSelf automatic backup failed',e);if(reason==='manual'&&typeof toast==='function')toast('Could not save the backup to that folder.');return false}
+  }
+  async function chooseBackupFolder(){
+    if(!window.showDirectoryPicker){alert('Folder backup requires a supported browser/app with folder access. You can still use Export backup for a normal file.');return}
+    try{const handle=await window.showDirectoryPicker({mode:'readwrite'});if(!(await ensureDirPermission(handle)))return;if(await putBackupDirectory(handle)){const cfg=backupSettings();cfg.directoryName=handle.name||'';save();toast('Backup folder connected ♡');settingsPage()}}catch(e){if(e?.name!=='AbortError')toast('Could not connect that folder.')}
+  }
+  async function disconnectBackupFolder(){await clearBackupDirectory();state.autoBackup={...backupSettings(),enabled:false,directoryName:'',lastBackupAt:0};save();settingsPage();toast('Auto backup disconnected')}
+  async function manualBackupNow(){
+    if(await writeAutomaticBackup('manual'))return;
+    // If no folder exists, offer the normal export flow.
+    if(typeof exportData==='function')exportData();
+  }
+  function backupIntervalLabel(m){return m===5?'Every 5 minutes':m===60?'Every hour':m===1440?'Every 24 hours':'Every '+m+' minutes'}
+  function autoBackupPanel(){const c=backupSettings();return `<div class="panel" style="margin-top:15px"><div class="row between" style="gap:12px;flex-wrap:wrap"><div><h2>💾 Automatic backups</h2><p class="small muted">DearSelf can periodically save a JSON backup into a folder you choose.</p></div><label class="switch-row" style="margin:0"><span>Enable auto backup</span><input type="checkbox" ${c.enabled?'checked':''} onchange="toggleDearSelfAutoBackup(this.checked)"></label></div><div class="ds-additions-grid" style="margin-top:12px"><div class="field"><label>Backup folder</label><div class="ds-backup-status"><strong>${esc(c.directoryName||'No folder connected')}</strong><span class="small muted">Backups are named “DearSelf backup - date time.json”.</span></div><div class="actions" style="margin-top:9px"><button class="btn primary" onclick="chooseDearSelfBackupFolder()">${c.directoryName?'Change folder':'Choose folder'}</button>${c.directoryName?'<button class="btn" onclick="disconnectDearSelfBackupFolder()">Disconnect</button>':''}</div></div><div class="field"><label>How often?</label><select onchange="setDearSelfBackupInterval(Number(this.value))"><option value="5" ${c.intervalMinutes===5?'selected':''}>Every 5 minutes</option><option value="60" ${c.intervalMinutes===60?'selected':''}>Every hour</option><option value="1440" ${c.intervalMinutes===1440?'selected':''}>Every 24 hours</option></select><p class="small muted" style="margin-top:6px">Current: ${backupIntervalLabel(c.intervalMinutes)}</p></div><div class="field"><label>Backup cleanup</label><label class="switch-row"><span>Delete backups older than 7 days</span><input type="checkbox" ${c.deleteAfter7Days?'checked':''} onchange="setDearSelfBackupRetention(this.checked)"></label><p class="small muted">Only files named by DearSelf are eligible for automatic deletion.</p></div></div><div class="actions" style="margin-top:12px"><button class="btn" onclick="manualDearSelfBackupNow()">Create backup now</button><span class="small muted">${c.lastBackupAt?'Last backup: '+new Date(c.lastBackupAt).toLocaleString():'No automatic backup yet.'}</span></div><p class="small muted" style="margin-top:10px">Folder backups require permission from your device/browser. DearSelf will not delete unrelated files.</p></div>`}
+  window.chooseDearSelfBackupFolder=chooseBackupFolder;
+  window.disconnectDearSelfBackupFolder=disconnectBackupFolder;
+  window.manualDearSelfBackupNow=manualBackupNow;
+  window.toggleDearSelfAutoBackup=function(on){const c=backupSettings();c.enabled=!!on;save();if(on){if(!c.directoryName)toast('Choose a backup folder first ♡');else writeAutomaticBackup('scheduled');}settingsPage()};
+  window.setDearSelfBackupInterval=function(m){const c=backupSettings();c.intervalMinutes=[5,60,1440].includes(m)?m:60;save();toast('Backup frequency updated ♡');settingsPage()};
+  window.setDearSelfBackupRetention=function(on){backupSettings().deleteAfter7Days=!!on;save();toast(on?'7-day backup cleanup enabled':'7-day backup cleanup disabled');settingsPage()};
+  window.__dearSelfAutoBackupTick=async function(){const c=backupSettings();if(!c.enabled||!c.directoryName)return;if(!c.lastBackupAt||Date.now()-c.lastBackupAt>=c.intervalMinutes*60000)await writeAutomaticBackup('scheduled')};
+  setInterval(()=>window.__dearSelfAutoBackupTick?.(),60000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')window.__dearSelfAutoBackupTick?.()});
+
+  // Notebook: make the compatible-app behavior explicit while retaining existing fallbacks.
+  const oldOpenNotebookFile=window.openNotebookFile;
+  window.openNotebookFile=async function(ci,ti,ni,fi){
+    const f=state.courses?.[ci]?.topics?.[ti]?.notebooks?.[ni]?.files?.[fi];
+    if(!f)return;
+    try{
+      if(window.DearSelfDesktop?.openFile){const r=await window.DearSelfDesktop.openFile(f.data||'',f.name||'DearSelf file',f.type||'application/octet-stream');if(r?.ok)return;}
+    }catch(e){console.warn('Compatible app open failed',e)}
+    if(typeof oldOpenNotebookFile==='function')return oldOpenNotebookFile(ci,ti,ni,fi);
+  };
+
+  // Course filter for assignments.
+  let assignmentCourseFilter='__all__';
+  window.schoolAssignmentsPage=function(){
+    const groups=['Overdue','Due soon','Upcoming','Completed'];
+    const courses=[...new Set((state.assignments||[]).map(a=>a.course).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const filtered=(a)=>assignmentCourseFilter==='__all__'||(a.course||'')===assignmentCourseFilter;
+    document.getElementById('content').innerHTML=pageHead('Assignments','Plan work, track progress, and keep every deadline useful.')+`<div class="actions">${schoolBack()}<button class="btn primary" onclick="addAssignment()">＋ Assignment</button></div><div class="panel" style="margin-top:15px"><div class="ds-filter-row"><label><b>Course:</b></label><select onchange="setAssignmentCourseFilter(this.value)"><option value="__all__">All courses</option>${courses.map(c=>`<option value="${esc(c)}" ${assignmentCourseFilter===c?'selected':''}>${esc(c)}</option>`).join('')}</select><button class="btn" onclick="setAssignmentCourseFilter('__all__')">Clear filter</button><span class="small muted">Showing ${(state.assignments||[]).filter(filtered).length} assignment${state.assignments.filter(filtered).length===1?'':'s'}</span></div></div>${groups.map(g=>{let items=state.assignments.map((a,i)=>({a,i})).filter(x=>filtered(x.a)&&assignmentBucket(x.a)===g);return `<div class="panel" style="margin-top:15px"><h2>${g} <span class="small muted">${items.length}</span></h2><div class="list">${items.map(x=>assignmentCard(x.a,x.i)).join('')||'<div class="empty">Nothing here.</div>'}</div></div>`}).join('')}`;
+  };
+  window.setAssignmentCourseFilter=function(vv){assignmentCourseFilter=vv||'__all__';schoolAssignmentsPage()};
+
+  // Task auto-filters: show all, assignments, exams, school, personal, finance, other, or completed/open.
+  let taskFilter='all';
+  function taskType(x){const title=String(x.title||'').toLowerCase();if(/^assignment\s*:/i.test(x.title||'')||title.includes('assignment'))return 'assignments';if(/^exam\s*:/i.test(x.title||'')||title.includes('exam'))return 'exams';return (x.category||'other').toLowerCase()}
+  window.tasksPage=function(){
+    const filters=[['all','All'],['assignments','Assignments'],['exams','Exams'],['school','School'],['personal','Personal'],['finance','Finance'],['other','Other'],['open','Open'],['completed','Completed']];
+    const all=state.tasks||[];
+    const matches=x=>{if(taskFilter==='all')return true;if(taskFilter==='open')return !x.done;if(taskFilter==='completed')return !!x.done;return taskType(x)===taskFilter};
+    const visible=all.map((x,i)=>({x,i})).filter(z=>matches(z.x));
+    document.getElementById('content').innerHTML=pageHead('Tasks','A flexible task list for school, life, and everything in between.')+`<div class="actions"><button class="btn primary" onclick="addTask()">＋ Add task</button><button class="btn" onclick="clearDone()">Clear all completed</button><button class="btn" onclick="schoolAssignmentsPage()">School assignments →</button></div><div class="ds-filter-row"><b>Filter:</b>${filters.map(([k,l])=>`<button class="ds-filter-chip ${taskFilter===k?'active':''}" onclick="setTaskFilter('${k}')">${l}</button>`).join('')}</div><div class="panel"><div class="small muted" style="margin-bottom:8px">Showing ${visible.length} of ${all.length} tasks</div><div class="list">${visible.map(({x,i})=>`<div class="item"><input type="checkbox" ${x.done?'checked':''} onchange="toggleTask(${i})"><div class="item-main"><div class="item-title" style="${x.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(x.title)}</div><div class="item-meta">${x.due?'Due '+esc(x.due):'No deadline'} ${x.priority?' · '+esc(x.priority):''}${x.category?' · '+esc(x.category):''}</div></div><button class="btn ghost" onclick="deleteAt('tasks',${i},'Tasks')">×</button></div>`).join('')||`<div class="empty"><strong>No matching tasks</strong>Try another filter.</div>`}</div></div>`;
+  };
+  window.setTaskFilter=function(k){taskFilter=k||'all';tasksPage()};
+
+  // Auto assignments calendar. It creates/uses one dedicated calendar and upserts by assignmentId.
+  window.syncAutoAssignmentsToCalendar=function(){
+    const name='Auto Assignments';
+    let cal=state.calendars.find(c=>c.name===name);
+    if(!cal){cal={name,visible:true,color:'var(--accent)',autoAssignments:true};state.calendars.push(cal)}else{cal.visible=true;cal.autoAssignments=true}
+    const assignments=(state.assignments||[]).filter(a=>a.due);
+    const byId=new Map(state.events.filter(e=>e.source==='autoAssignment'&&e.assignmentId).map(e=>[String(e.assignmentId),e]));
+    let added=0,updated=0;
+    assignments.forEach((a,idx)=>{
+      const aid=String(a.id||('assignment_'+idx+'_'+String(a.title||'').slice(0,20)));
+      if(!a.id)a.id=aid;
+      let e=byId.get(aid);
+      const obj={id:e?.id||('auto_assignment_'+aid),source:'autoAssignment',assignmentId:aid,title:a.title||'Assignment',date:a.due,calendar:name,time:a.dueTime||'',endTime:'',location:'',notes:(a.course?('Course: '+a.course+'\\n'):'')+(a.topic?'Topic: '+a.topic+'\\n':'')+(a.notes||''),allDay:!a.dueTime,course:a.course||''};
+      if(e){Object.assign(e,obj);updated++}else{state.events.push(obj);added++}
+    });
+    // Remove stale auto events only when the assignment no longer has a due date or was deleted.
+    const valid=new Set(assignments.map((a,idx)=>String(a.id||('assignment_'+idx+'_'+String(a.title||'').slice(0,20)))));
+    state.events=state.events.filter(e=>e.source!=='autoAssignment'||valid.has(String(e.assignmentId)));
+    save();calendarPage();toast(`Auto Assignments updated ♡ ${added} added · ${updated} updated`);
+  };
+  window.openAutoAssignments=function(){syncAutoAssignmentsToCalendar()};
+
+  // Replace calendar header with an Auto Assignments action while preserving all existing calendar behavior.
+  const originalCalendarPage=window.calendarPage;
+  window.calendarPage=function(){
+    if(typeof originalCalendarPage==='function')originalCalendarPage();
+    const heads=document.querySelectorAll('#content .calendar-head .actions');
+    if(!heads.length)return;
+    const target=heads[heads.length-1];
+    if(target.querySelector('.ds-auto-assignment-btn'))return;
+    const b=document.createElement('button');b.className='btn ds-auto-assignment-btn';b.textContent='📝 Auto assignments';b.title='Scan dated assignments and fill the Auto Assignments calendar';b.onclick=()=>syncAutoAssignmentsToCalendar();target.insertBefore(b,target.querySelector('.btn.primary'));
+  };
+
+  // Upgrade assignment creation/editing so every assignment has a stable id for calendar sync.
+  const originalAddAssignment=window.addAssignment;
+  window.addAssignment=function(){
+    if(typeof originalAddAssignment==='function')originalAddAssignment();
+    setTimeout(()=>{const btn=[...document.querySelectorAll('#modal .btn.primary')].find(b=>/save assignment/i.test(b.textContent||''));if(!btn||btn.dataset.dsAutoId)return;btn.dataset.dsAutoId='1';const old=btn.getAttribute('onclick')||'';btn.setAttribute('onclick',old.replace("state.assignments.push({title:t,course:v('f_course')", "state.assignments.push({id:'assignment_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),title:t,course:v('f_course')"));},0);
+  };
+  // Best-effort migration for existing assignments.
+  (state.assignments||[]).forEach((a,i)=>{if(!a.id)a.id='assignment_'+i+'_'+Date.now().toString(36)});
+  save();
+
+  // Settings wrapper: inject the new backup panel once.
+  const oldSettings=window.settingsPage;
+  window.settingsPage=function(){if(typeof oldSettings==='function')oldSettings();const c=document.getElementById('content');if(!c||c.querySelector('#dearselfAutoBackupPanel'))return;const panel=document.createElement('div');panel.id='dearselfAutoBackupPanel';panel.innerHTML=autoBackupPanel();c.appendChild(panel)};
+})();
+</script>
 </body>
 </html>
 
@@ -2795,12 +2946,12 @@ body[data-page="School"] .school-hub-grid .panel{min-height:170px;background:lin
 <script>window.removeHomeBannerImage=removeHomeBannerImage;window.openHomeBannerSettings=openHomeBannerSettings;window.pickHomeImage=pickHomeImage;</script>
 
 <script>
-/* DearSelf V43.5 — authoritative update checker.
+/* DearSelf V44.0 — authoritative update checker.
    The app compares normalized numeric versions and never treats its own
    current version as an available update. */
 (function(){
-  const DS_VERSION = "V43.5 Beta";
-  const DS_VERSION_NUMBER = 43.5;
+  const DS_VERSION = "V44.1 Beta";
+  const DS_VERSION_NUMBER = 44.1;
   window.DEARSELF_VERSION = DS_VERSION;
   window.DEARSELF_VERSION_NUMBER = DS_VERSION_NUMBER;
 
@@ -2850,5 +3001,316 @@ body[data-page="School"] .school-hub-grid .panel{min-height:170px;background:lin
   document.addEventListener("visibilitychange", ()=>{
     if(document.visibilityState === "visible") window.runDearSelfUpdateCheck();
   });
+})();
+</script>
+
+
+<script>
+/* DearSelf V44.0 — real document reader/editor.
+   Office Open XML files are parsed client-side. PDF is displayed natively by
+   the browser and can be annotated/opened externally. Unsupported formats
+   fall back safely to the OS-compatible application. */
+(function(){
+  const DS_V44 = "V44.1 Beta";
+  const DS_N44 = 44.1;
+  window.DEARSELF_VERSION = DS_V44;
+  window.DEARSELF_VERSION_NUMBER = DS_N44;
+
+  const scriptPromises = {};
+  function loadExternalScript(src, test){
+    if(test()) return Promise.resolve();
+    if(scriptPromises[src]) return scriptPromises[src];
+    scriptPromises[src] = new Promise((resolve,reject)=>{
+      const s=document.createElement("script");
+      s.src=src; s.async=true;
+      s.onload=()=>test()?resolve():reject(new Error("Library loaded but unavailable"));
+      s.onerror=()=>reject(new Error("Could not load library"));
+      document.head.appendChild(s);
+    });
+    return scriptPromises[src];
+  }
+  function ensureZip(){
+    return loadExternalScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",()=>!!window.JSZip);
+  }
+  function ensureXlsx(){
+    return loadExternalScript("https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js",()=>!!window.XLSX);
+  }
+  function dataUrlToUint8(data){
+    const comma=String(data||"").indexOf(",");
+    const b64=comma>=0?data.slice(comma+1):data;
+    const bin=atob(b64); const out=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+    return out;
+  }
+  function uint8ToDataUrl(bytes,mime){
+    let bin=""; const chunk=0x8000;
+    for(let i=0;i<bytes.length;i+=chunk) bin+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+    return "data:"+(mime||"application/octet-stream")+";base64,"+btoa(bin);
+  }
+  function escHtml(s){
+    if(typeof esc==="function") return esc(String(s??""));
+    return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function ext(name){return String(name||"").toLowerCase().split(".").pop();}
+  function mimeFor(f){return f?.type||"application/octet-stream";}
+  function isDoc(f){return ["docx","doc","odt","rtf","txt","md","csv","json","xml","html","htm"].includes(ext(f?.name));}
+  function isPpt(f){return ["pptx","ppt"].includes(ext(f?.name));}
+  function isSheet(f){return ["xlsx","xls","ods","csv"].includes(ext(f?.name));}
+  function isPdf(f){return ext(f?.name)==="pdf" || mimeFor(f)==="application/pdf";}
+  function isImage(f){return mimeFor(f).startsWith("image/") || ["png","jpg","jpeg","gif","webp","svg"].includes(ext(f?.name));}
+
+  function safeXmlText(s){
+    return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+  }
+  function parseXml(text){return new DOMParser().parseFromString(text,"application/xml");}
+  function xmlTextNodes(root, selector){
+    return Array.from(root.getElementsByTagNameNS("*",selector));
+  }
+
+  async function readDocx(f){
+    await ensureZip();
+    const zip=await JSZip.loadAsync(dataUrlToUint8(f.data));
+    const file=zip.file("word/document.xml");
+    if(!file) throw new Error("This DOCX has no main document.");
+    const xml=await file.async("string"), doc=parseXml(xml);
+    const paras=Array.from(doc.getElementsByTagNameNS("*","p"));
+    const blocks=[];
+    paras.forEach((p,i)=>{
+      const texts=Array.from(p.getElementsByTagNameNS("*","t")).map(n=>n.textContent||"");
+      const text=texts.join("");
+      if(!text && !p.getElementsByTagNameNS("*","drawing").length) return;
+      const style=p.getElementsByTagNameNS("*","pStyle")[0]?.getAttribute("w:val")||"";
+      let tag=/Heading1|Title/i.test(style)?"h2":/Heading2/i.test(style)?"h3":/Heading3/i.test(style)?"h4":"p";
+      blocks.push({tag,text,xmlIndex:i});
+    });
+    return {kind:"docx",title:f.name,blocks,zip,xml,paras};
+  }
+
+  async function readPptx(f){
+    await ensureZip();
+    const zip=await JSZip.loadAsync(dataUrlToUint8(f.data));
+    const names=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/i.test(n))
+      .sort((a,b)=>Number(a.match(/slide(\d+)/i)[1])-Number(b.match(/slide(\d+)/i)[1]));
+    if(!names.length) throw new Error("No slides found.");
+    const slides=[];
+    for(const name of names){
+      const xml=await zip.file(name).async("string"), doc=parseXml(xml);
+      const nodes=Array.from(doc.getElementsByTagNameNS("*","t"));
+      slides.push({name,xml,texts:nodes.map(n=>n.textContent||""),doc,nodes});
+    }
+    return {kind:"pptx",title:f.name,slides,zip};
+  }
+
+  async function readText(f){
+    const bytes=dataUrlToUint8(f.data);
+    let text=new TextDecoder("utf-8").decode(bytes);
+    return {kind:"text",title:f.name,text};
+  }
+
+  async function readPdf(f){
+    return {kind:"pdf",title:f.name,data:f.data};
+  }
+
+  function officeEditorHtml(model){
+    if(model.kind==="docx"){
+      return `<div class="ds-office-editor" contenteditable="true" spellcheck="true" id="dsOfficeEdit">${
+        model.blocks.map((b,i)=>`<${b.tag} data-block="${i}">${escHtml(b.text)}</${b.tag}>`).join("")
+      }</div>`;
+    }
+    if(model.kind==="pptx"){
+      return `<div class="ds-office-editor" id="dsOfficeEdit">${
+        model.slides.map((s,si)=>`<section class="ds-slide-edit"><h3>Slide ${si+1}</h3><div contenteditable="true" data-slide="${si}">${
+          s.texts.map((t,ti)=>`<p data-text="${ti}">${escHtml(t)}</p>`).join("")
+        }</div></section>`).join("")
+      }</div>`;
+    }
+    return "";
+  }
+
+  function readerModal(ci,ti,ni,fi,f,model,editable=true){
+    let body="";
+    let actions="";
+    if(model.kind==="docx"){
+      body=officeEditorHtml(model);
+      actions=`<button class="btn primary" onclick="window.DearSelfV44.saveOfficeFile(${ci},${ti},${ni},${fi},'docx')">Save changes to Word file</button>`;
+    }else if(model.kind==="pptx"){
+      body=officeEditorHtml(model);
+      actions=`<button class="btn primary" onclick="window.DearSelfV44.saveOfficeFile(${ci},${ti},${ni},${fi},'pptx')">Save changes to PowerPoint file</button>`;
+    }else if(model.kind==="text"){
+      body=`<textarea id="dsOfficeText" class="ds-office-text">${escHtml(model.text)}</textarea>`;
+      actions=`<button class="btn primary" onclick="window.DearSelfV44.saveTextFile(${ci},${ti},${ni},${fi})">Save changes</button>`;
+    }else if(model.kind==="pdf"){
+      body=`<div class="ds-pdf-wrap"><iframe src="${model.data}" title="${escHtml(f.name)}"></iframe></div>`;
+      actions=`<button class="btn" onclick="window.DearSelfV44.openOriginal(${ci},${ti},${ni},${fi})">Open in PDF app</button>`;
+    }else if(model.kind==="xlsx"){
+      body=model.html;
+      actions=`<button class="btn primary" onclick="window.DearSelfV44.saveXlsx(${ci},${ti},${ni},${fi})">Save spreadsheet changes</button>`;
+    }else if(model.kind==="image"){
+      body=`<div class="ds-image-wrap"><img src="${f.data}" alt="${escHtml(f.name)}"></div>`;
+      actions=`<button class="btn" onclick="window.DearSelfV44.openOriginal(${ci},${ti},${ni},${fi})">Open in image app</button>`;
+    }else{
+      body=`<div class="empty"><strong>${escHtml(f.name)}</strong><p>This file type cannot be edited safely inside a browser. You can still open the original file with its compatible application.</p></div>`;
+      actions=`<button class="btn primary" onclick="window.DearSelfV44.openOriginal(${ci},${ti},${ni},${fi})">Open with compatible app</button>`;
+    }
+    modal(`<button class="modal-close" onclick="closeModal()">×</button>
+      <div class="row between"><div><span class="tag">DearSelf Reader</span><h2 style="margin-top:8px">${escHtml(f.name)}</h2></div><span class="small muted">${escHtml(f.type||ext(f.name).toUpperCase())}</span></div>
+      <div class="ds-reader-body">${body}</div>
+      <div class="actions" style="margin-top:15px">${actions}<button class="btn" onclick="window.DearSelfV44.openOriginal(${ci},${ti},${ni},${fi})">Open original</button><button class="btn" onclick="closeModal()">Close</button></div>`);
+  }
+
+  async function readXlsx(f){
+    await ensureXlsx();
+    const wb=XLSX.read(dataUrlToUint8(f.data),{type:"array",cellStyles:true});
+    const htmlParts=[];
+    wb.SheetNames.forEach((name,si)=>{
+      const ws=wb.Sheets[name];
+      const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+      htmlParts.push(`<div class="ds-sheet" data-sheet="${si}"><h3>${escHtml(name)}</h3><div class="ds-sheet-scroll"><table class="ds-sheet-table"><tbody>${
+        aoa.map((row,ri)=>`<tr>${row.map((v,ci)=>`<td contenteditable="true" data-row="${ri}" data-col="${ci}">${escHtml(v)}</td>`).join("")}</tr>`).join("")
+      }</tbody></table></div></div>`);
+    });
+    return {kind:"xlsx",title:f.name,wb,html:htmlParts.join("")};
+  }
+
+  async function internalReadFile(ci,ti,ni,fi){
+    const f=state.courses[ci].topics[ti].notebooks[ni]?.files?.[fi];
+    if(!f)return;
+    try{
+      let model;
+      const e=ext(f.name);
+      if(e==="docx") model=await readDocx(f);
+      else if(e==="pptx") model=await readPptx(f);
+      else if(e==="xlsx") model=await readXlsx(f);
+      else if(isPdf(f)) model=await readPdf(f);
+      else if(isImage(f)) model={kind:"image",title:f.name};
+      else if(["txt","md","csv","json","xml","html","htm","rtf"].includes(e)) model=await readText(f);
+      else { window.DearSelfV44.openOriginal(ci,ti,ni,fi); return; }
+      readerModal(ci,ti,ni,fi,f,model);
+    }catch(err){
+      console.error("DearSelf reader:",err);
+      modal(`<button class="modal-close" onclick="closeModal()">×</button><h2>Couldn't read this file</h2><p class="muted">${escHtml(f.name)}</p><div class="empty"><p>DearSelf couldn't parse this document safely. Your original file is unchanged.</p></div><div class="actions"><button class="btn primary" onclick="window.DearSelfV44.openOriginal(${ci},${ti},${ni},${fi})">Open with compatible app</button><button class="btn" onclick="closeModal()">Close</button></div>`);
+    }
+  }
+
+  async function saveOfficeFile(ci,ti,ni,fi,kind){
+    const f=state.courses[ci].topics[ti].notebooks[ni].files[fi];
+    if(!f)return;
+    try{
+      await ensureZip();
+      const zip=await JSZip.loadAsync(dataUrlToUint8(f.data));
+      if(kind==="docx"){
+        const file=zip.file("word/document.xml"); if(!file) throw new Error("Missing Word document.");
+        const xml=await file.async("string"), doc=parseXml(xml);
+        const paras=Array.from(doc.getElementsByTagNameNS("*","p"));
+        const blocks=Array.from(document.querySelectorAll("#dsOfficeEdit > [data-block]"));
+        let bi=0;
+        for(const p of paras){
+          const ts=Array.from(p.getElementsByTagNameNS("*","t"));
+          if(!ts.length) continue;
+          if(bi>=blocks.length) break;
+          const val=blocks[bi++].innerText.replace(/\r/g,"");
+          ts[0].textContent=val;
+          for(let j=1;j<ts.length;j++) ts[j].textContent="";
+        }
+        zip.file("word/document.xml",new XMLSerializer().serializeToString(doc));
+      }else{
+        for(let si=0;si<document.querySelectorAll(".ds-slide-edit").length;si++){
+          const section=document.querySelectorAll(".ds-slide-edit")[si];
+          const slideModelIndex=si;
+          const slideName=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/i.test(n)).sort((a,b)=>Number(a.match(/slide(\d+)/i)[1])-Number(b.match(/slide(\d+)/i)[1]))[slideModelIndex];
+          if(!slideName)continue;
+          const file=zip.file(slideName); if(!file)continue;
+          const doc=parseXml(await file.async("string"));
+          const ts=Array.from(doc.getElementsByTagNameNS("*","t"));
+          const vals=Array.from(section.querySelectorAll("[data-text]")).map(x=>x.innerText.replace(/\r/g,""));
+          vals.forEach((v,i)=>{if(ts[i])ts[i].textContent=v});
+          zip.file(slideName,new XMLSerializer().serializeToString(doc));
+        }
+      }
+      const bytes=await zip.generateAsync({type:"uint8array"});
+      f.data=uint8ToDataUrl(bytes,f.type||"application/octet-stream");
+      f.updated=today(); save(); closeModal(); openNotebook(ci,ti,ni); toast("File saved ♡");
+    }catch(err){console.error(err);alert("Couldn't save this document safely. The original file was kept unchanged.");}
+  }
+
+  async function saveTextFile(ci,ti,ni,fi){
+    const f=state.courses[ci].topics[ti].notebooks[ni].files[fi];
+    const text=document.getElementById("dsOfficeText")?.value??"";
+    f.data="data:text/plain;charset=utf-8,"+encodeURIComponent(text);
+    f.type="text/plain"; f.updated=today(); save(); closeModal(); openNotebook(ci,ti,ni); toast("File saved ♡");
+  }
+
+  async function saveXlsx(ci,ti,ni,fi){
+    const f=state.courses[ci].topics[ti].notebooks[ni].files[fi];
+    try{
+      await ensureXlsx();
+      const wb=XLSX.read(dataUrlToUint8(f.data),{type:"array"});
+      document.querySelectorAll(".ds-sheet").forEach((sheetEl,si)=>{
+        const name=wb.SheetNames[si]; if(!name)return;
+        const rows=[];
+        sheetEl.querySelectorAll("tr").forEach(tr=>{
+          rows.push(Array.from(tr.querySelectorAll("td")).map(td=>td.innerText));
+        });
+        wb.Sheets[name]=XLSX.utils.aoa_to_sheet(rows);
+      });
+      const bytes=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+      f.data=uint8ToDataUrl(new Uint8Array(bytes),f.type||"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      f.updated=today(); save(); closeModal(); openNotebook(ci,ti,ni); toast("Spreadsheet saved ♡");
+    }catch(e){console.error(e);alert("Couldn't save the spreadsheet. The original file was kept unchanged.");}
+  }
+
+  function openOriginal(ci,ti,ni,fi){
+    const f=state.courses[ci].topics[ti].notebooks[ni]?.files?.[fi]; if(!f)return;
+    try{
+      if(window.DearSelfDesktop?.openFile){
+        window.DearSelfDesktop.openFile(f.data||"",f.name||"DearSelf file",f.type||"application/octet-stream");
+        return;
+      }
+      const bytes=dataUrlToUint8(f.data), blob=new Blob([bytes],{type:f.type||"application/octet-stream"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a"); a.href=url; a.download=f.name||"DearSelf file"; a.style.display="none";
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),60000);
+      toast("Original file opened/downloaded ♡");
+    }catch(e){toast("Couldn't open the original file.");}
+  }
+
+  window.DearSelfV44={internalReadFile,saveOfficeFile,saveTextFile,saveXlsx,openOriginal};
+
+  window.openNotebookFile=function(ci,ti,ni,fi){
+    return internalReadFile(ci,ti,ni,fi);
+  };
+
+  // A more useful reader for topic attachments too.
+  window.viewAttachmentV44=async function(ci,ti,ai){
+    const a=state.courses[ci].topics[ti].attachments[ai]; if(!a)return;
+    const fake={...a};
+    const f=fake;
+    try{
+      if(isPdf(f)){ modal(`<button class="modal-close" onclick="closeModal()">×</button><h2>${escHtml(f.name)}</h2><div class="ds-pdf-wrap"><iframe src="${f.data}" title="${escHtml(f.name)}"></iframe></div><div class="actions"><button class="btn primary" onclick="window.open('${String(f.data).replace(/'/g,"%27")}','_blank')">Open</button><button class="btn" onclick="closeModal()">Close</button></div>`); return; }
+      if(isImage(f)){ modal(`<button class="modal-close" onclick="closeModal()">×</button><h2>${escHtml(f.name)}</h2><div class="ds-image-wrap"><img src="${f.data}" alt="${escHtml(f.name)}"></div><button class="btn" onclick="closeModal()">Close</button>`); return; }
+      modal(`<button class="modal-close" onclick="closeModal()">×</button><h2>${escHtml(f.name)}</h2><div class="empty"><p>Open this file from the compatible application to edit it.</p></div><div class="actions"><button class="btn primary" onclick="closeModal();openExternally(${ci},${ti},${ai})">Open with compatible app</button></div>`);
+    }catch(e){console.error(e)}
+  };
+
+  const style=document.createElement("style");
+  style.textContent=`
+    .ds-reader-body{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;max-height:65vh;overflow:auto}
+    .ds-office-editor{background:#fff;color:#222;border-radius:10px;padding:38px;min-height:520px;line-height:1.65;outline:none;box-shadow:0 8px 25px rgba(0,0,0,.06)}
+    .ds-office-editor:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+    .ds-office-text{width:100%;min-height:520px;background:#fff;color:#222;border:0;border-radius:10px;padding:28px;font:15px/1.6 ui-monospace,monospace;resize:vertical}
+    .ds-slide-edit{background:#fff;color:#222;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 5px 18px rgba(0,0,0,.07)}
+    .ds-slide-edit>h3{margin-top:0;color:#555}
+    .ds-sheet{background:#fff;color:#222;border-radius:12px;padding:15px;margin-bottom:15px}
+    .ds-sheet-scroll{overflow:auto;max-height:48vh}
+    .ds-sheet-table{border-collapse:collapse;min-width:100%;font-size:13px}
+    .ds-sheet-table td{border:1px solid #ccc;padding:7px 9px;min-width:70px;white-space:pre-wrap}
+    .ds-sheet-table td:focus{outline:2px solid var(--accent)}
+    .ds-pdf-wrap{background:#444;border-radius:12px;overflow:hidden;height:65vh}
+    .ds-pdf-wrap iframe{width:100%;height:100%;border:0;background:#fff}
+    .ds-image-wrap{background:#fff;border-radius:12px;padding:15px;text-align:center;max-height:65vh;overflow:auto}
+    .ds-image-wrap img{max-width:100%;height:auto}
+    @media(max-width:700px){.ds-office-editor{padding:20px}.ds-pdf-wrap{height:60vh}}
+  `;
+  document.head.appendChild(style);
 })();
 </script>

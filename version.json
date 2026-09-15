@@ -1,10 +1,9 @@
 {
-  "version": "V43.5 Beta",
-  "versionNumber": 43.5,
+  "version": "V44.1 Beta",
+  "versionNumber": 44.1,
   "notes": [
-    "V43.5 Beta full bug-fix release.",
-    "Fixed the startup/loading failure caused by duplicate version declarations.",
-    "Fixed and consolidated the update checker so the current version is never treated as an update.",
-    "Preserves DearSelf features and the V43.3/V43.4 fixes."
+    "Fixed the DearSelf startup/loading-screen bug.",
+    "Version constants are declared before first use.",
+    "Preserves the V44 document reader overhaul."
   ]
 }
