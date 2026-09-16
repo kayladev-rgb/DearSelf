@@ -1,9 +1,1 @@
-{
-  "version": "V44.1 Beta",
-  "versionNumber": 44.1,
-  "notes": [
-    "Fixed the DearSelf startup/loading-screen bug.",
-    "Version constants are declared before first use.",
-    "Preserves the V44 document reader overhaul."
-  ]
-}
+{"version":"V46.5 Beta","versionNumber":46.5}

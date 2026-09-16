@@ -1,48 +1,48 @@
-const CACHE = 'dearself-v44-1-beta';
-const CORE = ['./', './index.html', './version.json', './manifest.json'];
+/* DearSelf V46.1 service worker — persistent duplicate-safe Web Push handling. */
+const CACHE_NAME = 'dearself-cache-v1';
+const RECENT_PUSHES = new Map();
+const DEDUP_MS = 15000;
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(CORE).catch(() => {}))
-      .then(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
-
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.pathname.endsWith('/version.json') || url.pathname.endsWith('/index.html')) {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then(response => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request).then(r => r || caches.match('./index.html')))
-    );
-    return;
-  }
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        if (response && response.ok && url.origin === location.origin) {
-          const copy = response.clone();
-          caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
-        }
-        return response;
-      })
-      .catch(() => caches.match(event.request))
-  );
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+});
+
+self.addEventListener('push', event => {
+  event.waitUntil((async()=>{
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; }
+    catch (e) { data = { title: 'DearSelf', body: event.data ? event.data.text() : '' }; }
+
+    const key = String(data.tag || data.key || (data.title + '|' + data.body));
+    const now = Date.now();
+    const previous = RECENT_PUSHES.get(key);
+    if (previous && now - previous < DEDUP_MS) return;
+    RECENT_PUSHES.set(key, now);
+    for (const [k,t] of RECENT_PUSHES) if (now-t > DEDUP_MS) RECENT_PUSHES.delete(k);
+
+    const existing = await self.registration.getNotifications({tag:key});
+    if (existing && existing.length) return;
+
+    const title = data.title || 'DearSelf';
+    const options = {
+      body: data.body || '',
+      icon: data.icon || '/icons/icon-192.png',
+      badge: data.badge || '/icons/icon-96.png',
+      tag: key,
+      renotify: false,
+      data: { url: data.url || '/' }
+    };
+    await self.registration.showNotification(title, options);
+  })());
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(self.clients.matchAll({type:'window', includeUncontrolled:true}).then(list => {
+    for (const c of list) if ('focus' in c) return c.focus();
+    if (self.clients.openWindow) return self.clients.openWindow(url);
+  }));
 });
